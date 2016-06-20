@@ -1,0 +1,111 @@
+%-------------------------------------------------------------------------------
+\chapter{Condensing of a Model Predictive Control problem}
+\label{app.condensing}
+\acresetall
+%-------------------------------------------------------------------------------
+
+In this appendix we illustrate the condensing procedure employed in the
+\ac{MPC} field in order to eliminate some of the decision variables
+\cite{Bock1984ifac}.
+
+Consider a linear model
+%
+\begin{equation}
+\begin{aligned}
+    \V{x}_{k+1} =& \M{A}_k \V{x}_k + \M{B}_k \V{u}_k, \quad k \in \{0, ..., N-1\}\\
+\end{aligned}
+\end{equation}
+%
+where $\V{x}_k$ and $\V{u}_k$ are $k$-th state and control vectors
+respectively, and $N$ is the length of preview horizon.
+
+
+Condensing amounts to finding such matrices $\M{U}_{x}$ and $\M{U}_{u}$ that
+%
+\begin{equation}
+\begin{aligned}
+    \hatV{x} = \M{U}_{x} \V{x}_0 + \M{U}_{u} \hatV{u},\\
+\end{aligned}
+\end{equation}
+%
+where
+%
+\begin{equation}
+    \hatV{x} = (\V{x}_1, \dots, \V{x}_N),
+    \quad
+    \hatV{u} = (\V{u}_0, \dots, \V{u}_{N-1}).
+\end{equation}
+%
+Matrices $\M{U}_{x}$ and $\M{U}_{u}$ are obtained by evaluating equation of the
+dynamics recursively
+%
+\begin{equation}
+\begin{aligned}
+    \V{x}_{1} & = \M{A}_0 \V{x}_0 + \M{B}_0 \V{u}_0,\\
+    \V{x}_{2} & = \M{A}_1 \V{x}_1 + \M{B}_1 \V{u}_1
+                = \M{A}_1 \left( \M{A}_0 \V{x}_0 + \M{B}_0 \V{u}_0 \right) + \M{B}_1 \V{u}_1
+                = \M{A}_1 \M{A}_0 \V{x}_0 +
+                    \begin{bmatrix}
+                        \M{A}_1 \M{B}_0 & \M{B}_1
+                    \end{bmatrix}
+                    \begin{bmatrix}
+                        \V{u}_0 \\
+                        \V{u}_1
+                    \end{bmatrix}
+                    ,
+                    \\
+    \dots     &,
+\end{aligned}
+\end{equation}
+%
+which results in
+%
+\begin{equation}
+    \M{U}_{x} =
+        \begin{bmatrix}
+        \M{A}_0    \\
+        \M{A}_1 \M{A}_0  \\
+        \vdots           \\
+        \M{A}_{N-1} \dots \M{A}_0 \\
+        \end{bmatrix}
+        ,
+    \quad
+    \M{U}_{u} =
+        \begin{bmatrix}
+        \M{B}_0                             & \M{0}                                 & \dots & \M{0} \\
+        \M{A}_1 \M{B}_0                     & \M{B}_1                               & \dots & \M{0} \\
+        \vdots                              & \vdots                                & \ddots& \vdots \\
+        \M{A}_{N-1} \dots \M{A}_1 \M{B}_0   & \M{A}_{N-1} \dots \M{A}_2 \M{B}_1     & \dots & \M{B}_{N-1} \\
+        \end{bmatrix}
+        .
+\end{equation}
+%
+
+
+In the case of time invariant system, matrices take a simpler form
+%
+\begin{equation}
+    \M{U}_{x} =
+        \begin{bmatrix}
+        \M{A}    \\
+        \M{A}^2  \\
+        \vdots   \\
+        \M{A}^N  \\
+        \end{bmatrix}
+        ,
+    \quad
+    \M{U}_{u} =
+        \begin{bmatrix}
+        \M{B}                   & \M{0}                 & \dots & \M{0} \\
+        \M{A} \M{B}             & \M{B}                 & \dots & \M{0} \\
+        \vdots                  & \vdots                & \ddots& \vdots \\
+        \M{A}^{N-1} \M{B}       & \M{A}^{N-2} \M{B}     & \dots & \M{B} \\
+        \end{bmatrix}
+        ,
+\end{equation}
+%
+
+After condensing, all state $\hatV{x} = (\V{x}_1, \dots, \V{x}_N)$ variables
+are expressed through the initial state $\V{x}_0$ and control variables
+$\hatV{u} = (\V{u}_0, \dots, \V{u}_{N-1})$. Therefore, $\hatV{x}$ and can be
+eliminated from constraints and objectives of the \ac{MPC} problem.

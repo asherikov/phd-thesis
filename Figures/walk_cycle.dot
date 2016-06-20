@@ -1,0 +1,36 @@
+digraph G {
+    node [fontname="Times", height = 1, width = 1, margin=0];
+
+    subgraph cluster_0 {
+        style=filled;
+        color=lightgrey;
+        node [fillcolor=white, style=filled];
+        a0[label = "Lift-off", pos="-1.8213,-1.1!"];
+        a1[label = "Swing\n phase", pos="-2.5,0!"];
+        a2[label = "Impact", pos="-1.8213,1.1!"];
+        d0[ label = "Single\n support\n (left leg)", pos="-1.4,0!",
+            style=filled,
+            color=lightgrey,
+            fillcolor=lightgrey,
+            shape=box];
+    }
+
+    subgraph cluster_1 {
+        style=filled;
+        color=lightgrey;
+        node [fillcolor=white, style=filled];
+        b0[label = "Lift-off", pos="1.8213,1.1!"];
+        b1[label = "Swing\n phase", pos="2.5,0!"];
+        b2[label = "Impact", pos="1.8213,-1.1!"];
+        d1[ label = "Single\n support\n (right leg)",
+            pos="1.4,0!",
+            style=filled,
+            color=lightgrey,
+            fillcolor=lightgrey,
+            shape=box];
+    }
+    c0[label = "Double\n support", pos="0,1.5!"];
+    c1[label = "Double\n support", pos="0,-1.5!"];
+
+    a0 -> a1 -> a2 -> c0 -> b0 -> b1 -> b2 -> c1 -> a0;
+}

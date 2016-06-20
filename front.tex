@@ -1,0 +1,225 @@
+\pdfbookmark[0]{Title}{title}
+%\maketitle
+
+%----------------------------------------------------------------------
+% Title information
+%----------------------------------------------------------------------
+\Specialite{Automatique-Productique}
+\Arrete{7 ao\^ut 2006}
+\Auteur{Alexander Sherikov}
+\Directeur{Bernard Brogliato}
+%\CoDirecteur{Pierre-Brice Wieber} % optionnel
+\CoEncadrant{Pierre-Brice Wieber}
+\Laboratoire{de l'INRIA}
+\EcoleDoctorale{l'\'Ecole Doctorale EEATS}
+%\Titre{Préservation de l'équilibre et priorisation des tâches dans la commande du mouvement corps entier de robots humanoïdes}
+\Titre{Balance preservation\\ and task prioritization\\ in whole body motion control\\ of humanoid robots}
+%\Soustitre{Et le sous-titre}
+%\Depot{\today}
+\Depot{23 Mai 2016}
+
+\Jury{
+
+%    - Pascal Morin, Chargé de Recherche INRIA (CR) en détachement à l’UPMC,
+%      Habilité à Diriger des Recherches (HDR)
+%    - Olivier Stasse, Directeur de Recherche CNRS (DR) au LAAS
+%    - Abderrahmane Kheddar, Directeur de Recherche CNRS (DR) au LIRMM
+%    - Bernard BROGLIATO, Directeur de Recherche INRIA
+%    - Pierre-Brice Wieber, Chargé de Recherche INRIA
+
+
+%\UGTPresident{Mr \CM}{Doctorant, LIG}
+%\UGTPresidente{Mme \CM}{Doctorante, LIG}
+%\UGTExaminatrice{Mme \CM}{Doctorante, LIG}
+
+\UGTRapporteur{Olivier Stasse}{Directeur de Recherche CNRS au LAAS}
+\UGTRapporteur{Pascal Morin}{Chargé de Recherche INRIA en détachement à l’UPMC}
+
+\UGTPresident{Abderrahmane Kheddar}{Directeur de Recherche CNRS au LIRMM}
+%\UGTExaminateur{Abderrahmane Kheddar}{Directeur de Recherche CNRS au LIRMM}
+
+\UGTDirecteur{Bernard Brogliato}{Directeur de Recherche INRIA}
+%\UGTCoDirecteur{Pierre-Brice Wieber}{Charg\'e de Recherche INRIA}
+\UGTCoEncandrant{Pierre-Brice Wieber}{Charg\'e de Recherche INRIA}
+}
+
+\frontmatter
+
+%\maketitle %NE PAS LE METTRE
+\MakeUGthesePDG
+%----------------------------------------------------------------------
+
+%\listoftodos
+%\td{Delete TODO list}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%-------------------------------------------------------------------------------
+\cleardoublepage
+\phantomsection
+\pdfbookmark[0]{Abstract}{abstract}
+\chapter*{Abstract}
+%-------------------------------------------------------------------------------
+
+One of the greatest challenges in robot control is closing the gap between the
+motion capabilities of humans and humanoid robots. The difficulty lies in the
+complexity of the dynamical systems representing the said robots: their
+nonlinearity, underactuation, discrete behavior due to collisions and friction,
+high number of degrees of freedom. Moreover, humanoid robots are supposed to
+operate in non-deterministic environments, which require advanced real time
+control. The currently prevailing approach to coping with these difficulties is
+to impose various limitations on the motions and employ approximate models of
+the robots. In this thesis, we follow the same line of research and propose a
+new approach to the design of balance preserving whole body motion controllers.
+The key idea is to leverage the advantages of whole body and approximate models
+by mixing them within a single predictive control problem with strictly
+prioritized objectives.
+
+
+Balance preservation is one of the primary concerns in the control of humanoid
+robots. Previous research has already established that anticipation of motions
+is crucial for this purpose. We advocate that anticipation is helpful in this
+sense as a way to maintain capturability of the motion, \IE, the ability to
+stop. We stress that capturability of anticipated motions can be enforced with
+appropriate constraints. In practice, it is common to anticipate motions using
+approximate models in order to reduce computational effort, hence, a separate
+whole body motion controller is needed for tracking. Instead, we propose to
+introduce anticipation with an approximate model into the whole body motion
+controller. As a result, the generated whole body motions respect the
+capturability constraints and the anticipated motions of an approximate model
+take into account whole body constraints and tasks. We pose our whole body
+motion controllers as optimization problems with strictly prioritized
+objectives. Though such prioritization is common in the literature, we believe
+that it is often not properly exploited. We, therefore, propose several
+examples of controllers, where prioritization is useful and necessary to
+achieve desired behaviors. We evaluate our controllers in two simulated
+scenarios, where a whole body task influences walking motions of the robot and
+the robot optionally exploits a hand contact to maintain balance while
+standing.
+
+
+%\cleardoublepage
+\clearpage
+\phantomsection
+\pdfbookmark[0]{Resume}{resume}
+\chapter*{Résumé}
+
+Un des plus grands défis dans la commande des robots est de combler l'écart
+entre la capacité de mouvement de l'humain et des robots humanoïdes. La
+difficulté réside dans la complexité des systèmes dynamiques représentant les
+robots humanoïdes: la nonlinéarité, le sous-actionnement, le comportement
+non-lisse en raison de collisions et de frottement, le nombre élevé de degrés
+de liberté. De plus, les robots humanoïdes sont censés opérer dans des
+environnements non-déterministes, qui exigent une commande temps réel avancée.
+L'approche qui prévaut actuellement pour faire face à ces difficultés est
+d'imposer diverses restrictions sur les mouvements et d'employer des modèles
+approximatifs des robots. Dans cette thèse, nous suivons la même ligne de
+recherche et proposons une nouvelle approche pour la conception de contrôleurs
+corps entier qui preservent l'équilibre. L'idée principale est de tirer parti
+des avantages des modèles approximatifs et de corps entier en les mélangeant
+dans un seul problème de contrôle prédictif avec des objectifs strictement
+hiérarchisés.
+
+
+La préservation de l'équilibre est l'une des principales préoccupations dans la
+commande des robots humanoïdes. Des recherches antérieures ont déjà établi que
+l'anticipation des mouvements est essentiel à cet effet. Nous préconisons que
+l'anticipation est utile dans ce sens comme un moyen de maintenir la
+capturabilité du mouvement, \IE, la capacité de s'arrêter. Nous soulignons que
+capturabilité des mouvements prévus peut être imposée avec des contraintes
+appropriées. Dans la pratique, il est fréquent d'anticiper les mouvements du
+robot à l'aide de modèles approximatifs afin de réduire l'effort de calcul, par
+conséquent, un contrôleur séparé de mouvement du corps entier est nécessaire
+pour le suivi. Au lieu de cela, nous proposons d'introduire l'anticipation avec
+un modèle approximatif directement dans le contrôleur corps entier. En
+conséquence, les mouvements du corps entier générés respectent les contraintes
+de capturabilité et les mouvements anticipes du modèle approximatif prennent en
+compte les contraintes et les tâches désirées pour le corps entier. Nous posons
+nos contrôleurs du mouvement du corps entier comme des problèmes d'optimisation
+avec des objectifs strictement hiérarchisés. Bien que cet ordre de priorité
+soit commun dans la littérature, nous croyons qu'il est souvent mal exploité.
+Par conséquent, nous proposons plusieurs exemples de contrôleurs, où la
+hiérarchisation est utile et nécessaire pour atteindre les comportements
+souhaités. Nous évaluons nos contrôleurs dans deux scénarios simulés, où la
+tâche du corps entier du robot influence la marche et le robot exploite
+éventuellement un contact avec la main pour maintenir son équilibre en étant
+debout.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%-------------------------------------------------------------------------------
+%\cleardoublepage
+\clearpage
+\phantomsection
+\pdfbookmark[0]{Acknowledgements}{acknowledgements}
+\chapter*{Acknowledgements}
+%-------------------------------------------------------------------------------
+
+First and foremost, I would like to express my highest gratitude to
+Pierre-Brice Wieber and Dimitar Dimitrov, who guided me through the past years
+of my study. Their insights and advices were invaluable for my work. I would
+also like to thank Bernard Brogliato and jury members Abderrahmane Kheddar,
+Olivier Stasse, and Pascal Morin for their time and interest in this work.
+
+
+Some of my research was performed in collaboration with Camille Brasseur and
+Nestor Bohorquez-Dorante from BIPOP team, and Joven Agravante from LIRMM. I
+must thank them for their effort and feedback.
+
+
+I would like to personally thank Alejandro Blumentals and Jan Michalczyk, as
+well as other present and past members of BIPOP team, for their general
+assistance and support. I am also grateful to Diane Courtiol and Myriam Etienne
+from INRIA for their administrative assistance during my stay in France.
+
+
+%!sort -f
+As an active user of free software during most of my professional life, I
+cannot forget the people who invest their time and effort in development of
+software tools and packages, which I employed during my work on this thesis:
+\sn{Asymptote},
+\sn{FreeBSD},
+\sn{git},
+\sn{Maxima},
+\sn{Octave},
+\sn{qpOASES},
+\sn{TeX Live},
+\sn{Vim},
+and many others. Thank you all!
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%-------------------------------------------------------------------------------
+%\cleardoublepage
+\clearpage
+\phantomsection
+\pdfbookmark[0]{Contents}{contents}
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+%\cleardoublepage
+\clearpage
+\phantomsection
+\pdfbookmark[1]{List of Figures}{listoffigures}
+\listoffigures
+
+%\cleardoublepage
+%\phantomsection
+%\pdfbookmark[1]{List of Tables}{listoftables}
+%\listoftables
+%\lstlistoflistings
+
+%\cleardoublepage
+%\phantomsection
+%\pdfbookmark[1]{List of Algorithms}{listofalgorithms}
+%\listofalgorithms
+
+%\cleardoublepage
+\clearpage
+\phantomsection
+\pdfbookmark[1]{List of Acronyms}{listofacronyms}
+
+\acsetup{list-short-format=\bf,list-heading=chapter*,list-name=List of Acronyms}
+
+\printacronyms
+\acsetup{long-format=\tn}

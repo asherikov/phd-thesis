@@ -1,0 +1,46 @@
+%% /u/sy/beebe/tex/bibextract/bibextract-1.09/README, Sat Aug 25 18:23:39 2001
+%% Edit by Nelson H. F. Beebe <beebe@math.utah.edu>
+%% Update for version 1.09.
+%% /u/sy/beebe/tex/bibextract/README, Sat May 16 09:10:30 1998
+%% Edit by Nelson H. F. Beebe <beebe@math.utah.edu>
+%% Update my address
+%% /u/sy/beebe/tex/bibextract/README, Wed Oct 21 10:31:39 1992
+%% Edit by Nelson H. F. Beebe <beebe@plot79.math.utah.edu>
+
+************************************************************************
+************************************************************************
+** This code is copyright under the GNU Public License; see the file  **
+** COPYING for details.                                               **
+************************************************************************
+************************************************************************
+
+This directory, bibextract, contains UNIX shell and awk programs for
+extracting citation tags from LaTeX source and .aux files, and for
+using those tags to extract bibliography entries from a list of BibTeX
+.bib files.
+
+On many UNIX and POSIX systems, installation is a one-line command:
+
+     ./configure && make all check install
+
+"make uninstall" will remove the programs and their documentation from
+the system directories.
+
+Comments, questions, and bug reports should be addressed to the author
+at the address below.
+
+See the Makefile leading comments for other make targets.
+
+Author:
+ 	Nelson H. F. Beebe
+ 	Center for Scientific Computing
+ 	University of Utah
+ 	Department of Mathematics, 322 INSCC
+ 	155 S 1400 E RM 233
+ 	Salt Lake City, UT 84112-0090
+ 	USA
+ 	Email: beebe@math.utah.edu, beebe@acm.org,
+	       beebe@computer.org, beebe@ieee.org (Internet)
+ 	WWW URL: http://www.math.utah.edu/~beebe
+ 	Telephone: +1 801 581 5254
+ 	FAX: +1 801 585 1640, +1 801 581 4148

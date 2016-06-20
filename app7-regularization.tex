@@ -1,0 +1,64 @@
+%-------------------------------------------------------------------------------
+\chapter{Solving a hierarchy with regularization}
+\label{app.regularization}
+\acresetall
+%-------------------------------------------------------------------------------
+
+Consider a simple hierarchy
+%
+\begin{hierarchy}[hr.reg]
+    \level $\ubarV{\objb}_1 \le \objA_1 \x \le \barV{\objb}_1$
+    \level $\ubarV{\objb}_2 \le \objA_2 \x \le \barV{\objb}_2$
+    \level $\objA_3 \x = \V{\objb}_3$
+\end{hierarchy}
+%
+which must be solved with regularization of the objective on the second level
+using the equality objective on the last level. We can solve this hierarchy in
+two steps using a solver, which does not support regularization.
+
+
+The first step is to solve the following hierarchy consisting of two levels
+%
+\begin{hierarchy}[hr.reg_step1]
+    \level $\ubarV{\objb}_1 \le \objA_1 \x \le \barV{\objb}_1$
+    \level $\ubarV{\objb}_2 \le \objA_2 \x \le \barV{\objb}_2$\\
+           $\gamma_r \objA_3 \x = \gamma_r \V{\objb}_3$
+\end{hierarchy}
+%
+where $\gamma_r$ is regularization factor. Solution of \cref{hr.reg_step1}
+yields the vector of violations $\violation_2^{\star}$ of the second objective:
+%
+\begin{equation}
+    \ubarV{\objb}_2 \le \objA_2 \x - \violation_2^{\star} \le \barV{\objb}_2.
+\end{equation}
+%
+We decompose $\violation_2^{\star}$ into three components
+%
+\begin{equation}
+    \violation_2^{\star} = \ubar{\violation}_2^{\star} + \tilde{\violation}_2^{\star} + \bar{\violation}_2^{\star}
+\end{equation}
+%
+Vector $\ubar{\violation}_2^{\star}$ contains violations of the lower bounds
+and zeros for the constraints, where lower bounds are satisfied. Vectors
+$\tilde{\violation}_2^{\star}$ and $\bar{\violation}_2^{\star}$ are formed in
+the same way for equality and inequality constraints.
+
+
+The second step is to solve a hierarchy with relaxed bounds on the second
+level:
+%
+\begin{hierarchy}[hr.reg_step2]
+    \level $\ubarV{\objb}_1 \le \objA_1 \x \le \barV{\objb}_1$
+    \level $\ubarV{\objb}_2 + \ubar{\violation}_2^{\star} + \tilde{\violation}_2^{\star}
+            \le
+            \objA_2 \x
+            \le
+            \barV{\objb}_2 + \bar{\violation}_2^{\star} + \tilde{\violation}_2^{\star}$
+    \level $\objA_3 \x = \V{\objb}_3$
+\end{hierarchy}
+%
+
+
+The procedure is easily generalized to a larger number of levels with and
+without regularization. The number of hierarchies, which must be solved, is
+equal to the number of regularized levels plus one.

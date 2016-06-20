@@ -1,0 +1,812 @@
+%-------------------------------------------------------------------------------
+\chapter{Dynamics of a multibody system}
+\label{app.dynamics}
+\acresetall
+%-------------------------------------------------------------------------------
+
+In this appendix we derive equation of dynamics of a floating base multibody
+system with unilateral constraints. The presentation is based on
+\cite{Wieber2006fastmotions}, and likewise aims at exposing the structure of
+this equation, rather than at fast computation of its components. In addition
+to that, we demonstrate how momenta of the whole system are computed.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Preliminaries}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Notation}
+
+We consider a system of $n + 1$ interconnected rigid bodies. We associate the
+following variables with each body $k \in \{1, ..., n+1\}$
+%
+\begin{longtable}[l]{@{\extracolsep{0pt}}l @{\extracolsep{3pt}}l p{9.5cm}}
+    $m_k$                                           & $\in \RR_{>0}$                 & mass of $k$-th body\\
+    $\V{c}_k$                                       & $\in \RR^3$                   & position of \ac{CoM} of $k$-th body in the global frame\\
+    $\ddotV{x}_k = (\ddotV{c}_k, \dotV{\omega}_k)$  & $\in \RR^6$                   & constrained spatial acceleration of $k$-th body in frame $\FRAME{k}$\\
+    $\ddotV{x}_{k,u}$                               & $\in \RR^6$                   & unconstrained spatial acceleration of $k$-th body in frame $\FRAME{k}$\\
+    $\INERTIA_k$                                    & $\in \RR^{3 \CROSS 3}$        & inertia matrix of $k$-th body in frame $\FRAME{k}$\\
+    $\M{H}_k = \begin{bmatrix}
+                    m_k \V{I}_3 & \V{0}      \\
+                    \V{0}       & \INERTIA_k
+               \end{bmatrix}$                       & $\in \RR^{6 \CROSS 6}$        & spatial inertia matrix of $k$-th body in frame $\FRAME{k}$\\
+    $(\V{f}_k, \moment_k)$                          & $\in \RR^{6 \CROSS 6}$        & wrench acting on $k$-th body in frame $\FRAME{k}$\\
+    $\M{J}_k = (\M{J}_{\TRAN,k}, \M{J}_{\ROT,k})$   & $\in \RR^{6 \CROSS (n+6)}$      & Jacobian of $k$-th body\\
+\end{longtable}
+%
+\noindent and fix frame $\FRAME{k}$ to the \ac{CoM} of $k$-th body. All frames
+$\FRAME{k}$, as well as frame $\FRAME{r}$ fixed to the base have the same
+orientation as the global frame. Also, we reuse some of the variables defined
+in \cref{sec.complementarity_system}
+%
+\begin{longtable}[l]{@{\extracolsep{0pt}}l @{\extracolsep{3pt}}l p{9.5cm}}
+    $\q = (\qn, \V{r}, \V{\EULER})$         & $\in \RR^{n+6}$             & vector of generalized coordinates\\
+    $\M{H}(\q)$                             & $\in \RR^{(n+6) \CROSS (n+6)}$    & inertia matrix of the whole system\\
+    $\V{h}(\q, \dq)$                        & $\in \RR^{n+6}$               & vector of Coriolis and centrifugal terms of the whole system\\
+    $\Jcom$                                 & $\in \RR^{3 \CROSS (n+6)}$      & Jacobian of the \ac{CoM}\\
+    $\Itorques$                             & $\in \RR^{(n+6) \CROSS n}$      & torque selection matrix\\
+    $\V{g}$                                 & $\in \RR^3$                   & vector of gravitational acceleration\\
+    $m$                                     & $\in \RR_{>0}$                 & total mass of the system\\
+\end{longtable}
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Structure of Jacobians}\label{sec.jacobians}
+
+Vector of generalized coordinates $\V{q}$ contains three parts corresponding to
+joint angles, position, and orientation of the base. Consequently, the Jacobians,
+which map generalized velocities to the twist of the $k$-th body
+%
+\begin{equation}
+    \begin{bmatrix}
+        \dotV{c}_k \\
+        \V{\omega}_k
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        \M{J}_{\TRAN,k}\\
+        \M{J}_{\ROT,k}\\
+    \end{bmatrix}
+    \dq
+    =
+    \M{J}_k
+    \dq
+    ,
+\end{equation}
+%
+have corresponding structure:
+%
+\begin{equation}
+    \M{J}_k
+    =
+    \begin{bmatrix}
+        \M{J}_{\TRAN,k}\\
+        \M{J}_{\ROT,k}\\
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        \M{J}_{\TRAN,k,1}  &  \M{J}_{\TRAN,k,2}  &  \M{J}_{\TRAN,k,3}\\
+        \M{J}_{\ROT,k,1}  &  \M{J}_{\ROT,k,2}  &  \M{J}_{\ROT,k,3}\\
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        \M{J}_{\TRAN,k,1}  &  \M{I}_3  &  - \CROSS[(\V{c}_k - \V{r})] \\
+        \M{J}_{\ROT,k,1}  &  \M{0}_{3,3}  &  \M{I}_3\\
+    \end{bmatrix}
+\end{equation}
+%
+
+
+In situations when orientation of the base is represented by Euler angles
+$\V{\EULER} \in \RR^3$ and its angular velocity and acceleration are replaced
+with $\dotV{\EULER}$ and $\ddotV{\EULER}$, it is necessary to introduce matrix
+$\Teuler$, which transforms derivatives of the Euler angles to angular
+velocities:
+%
+\begin{equation}
+    \M{J}_k
+    =
+    \begin{bmatrix}
+        \M{J}_{\TRAN,k,1}  &  \M{I}_3  &  - \CROSS[(\V{c}_k - \V{r})] \Teuler\\
+        \M{J}_{\ROT,k,1}  &  \M{0}_{3,3}  &  \Teuler\\
+    \end{bmatrix}
+    =
+    \begin{bmatrix}
+        \M{J}_{\TRAN,k,1}  &  \M{I}_3  &  \T{(\CROSS[(\V{c}_k - \V{r})])} \Teuler\\
+        \M{J}_{\ROT,k,1}  &  \M{0}_{3,3}  &  \Teuler\\
+    \end{bmatrix}
+\end{equation}
+%
+Henceforth, we use this version of the Jacobian, since we represent
+orientation, angular velocity and acceleration of the base using Euler angles
+in our simulations.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Gauss' principle}
+
+The Gauss' principle states that constrained motions of rigid bodies in a
+system are as close as possible to the unconstrained motions in least-squares
+sense \cite{Wieber2006fastmotions, Moreau1966siamjc}. Based on this principle
+we define the following optimization problem:
+%
+\begin{equation}
+    \begin{aligned}
+            \MINIMIZE{\ddotV{x}_1, \dots, \ddotV{x}_n, \ddot{q}}
+                        & \frac{1}{2} \sum_{k=1}^{n+1}
+                            \T{(\ddotV{x}_k - \ddotV{x}_{k,u})}
+                            \M{H}_k
+                            (\ddotV{x}_k - \ddotV{x}_{k,u}) \\
+            \SUBJECTTO  & \ddotV{x}_k =
+                            \begin{bmatrix}
+                                \ddotV{c}_k\\
+                                \dotV{\omega}_k\\
+                            \end{bmatrix}
+                            =
+                            \begin{bmatrix}
+                                \M{J}_{\TRAN,k}\\
+                                \M{J}_{\ROT,k}\\
+                            \end{bmatrix}
+                            \ddotV{q}
+                            +
+                            \begin{bmatrix}
+                                \dotM{J}_{\TRAN,k}\\
+                                \dotM{J}_{\ROT,k}\\
+                            \end{bmatrix}
+                            \dotV{q}
+                            =
+                            \M{J}_k \ddotV{q} + \dotM{J}_k \dotV{q} \\
+                        & \M{H}_k \ddotV{x}_{k,u} =
+                            \begin{bmatrix}
+                                \V{f}_k\\
+                                \moment_k - \V{\omega}_k \CROSS \INERTIA_k \V{\omega}_k \\
+                            \end{bmatrix}\\
+                        & \ddotV{c}_j =
+                            \M{J}_{\TRAN,j}
+                            \ddotV{q}
+                            +
+                            \dotM{J}_{\TRAN,j}
+                            \dotV{q}
+                            \ge
+                            \V{b}_j,
+    \end{aligned}
+\end{equation}
+%
+where inequality constraint on $\ddotV{c}_j$ with $j \in \{1, ..., n+1\}$ is
+added for illustration. Handling of this constraint is easily generalized to
+arbitrary inequalities, such as contact constraints in
+\cref{sec.whole_body_model}.
+
+
+First, we expand multiplication in the objective function and eliminate
+constant terms to obtain:
+%
+\begin{equation}
+    \begin{aligned}
+            \MINIMIZE{\ddotV{x}_1, \dots, \ddotV{x}_n, \ddot{q}}
+                        & \frac{1}{2} \sum_{k=1}^{n+1}
+                            \left(
+                                \T{\ddotV{x}_k}  \M{H}_k  \ddotV{x}_k
+                                -
+                                2 \T{\ddotV{x}_k}  \M{H}_k  \ddotV{x}_{k,u}
+                            \right)\\
+            \SUBJECTTO  & \ddotV{x}_k =
+                            \M{J}_k \ddotV{q} + \dotM{J}_k \dotV{q} \\
+                        & \M{H}_k \ddotV{x}_{k,u} =
+                            \begin{bmatrix}
+                                \V{f}_k\\
+                                \moment_k - \V{\omega}_k \CROSS \INERTIA_k \V{\omega}_k \\
+                            \end{bmatrix}\\
+                        &   \M{J}_{\TRAN,j}
+                            \ddotV{q}
+                            +
+                            \dotM{J}_{\TRAN,j}
+                            \dotV{q}
+                            \ge
+                            \V{b}_j.
+    \end{aligned}
+\end{equation}
+%
+Then we eliminate all equality constraints
+%
+\begin{equation}
+    \begin{aligned}
+            \MINIMIZE{\ddot{q}}
+                        & \frac{1}{2} \sum_{k=1}^{n+1}
+                            \Bigg(
+                            \T{(\M{J}_k \ddotV{q})}  \M{H}_k  \M{J}_k \ddotV{q}
+                            +
+                            2 \T{(\M{J}_k \ddotV{q})}  \M{H}_k  \dotM{J}_k \dotV{q}
+                            +
+                            \T{(\dotM{J}_k \dotV{q})}  \M{H}_k  \dotM{J}_k \dotV{q}\\
+                        &
+                            -
+                            2 \T{(\M{J}_k \ddotV{q} + \dotM{J}_k \dotV{q})}
+                            \begin{bmatrix}
+                                \V{f}_k\\
+                                \moment_k - \V{\omega}_k \CROSS \INERTIA_k \V{\omega}_k \\
+                            \end{bmatrix} \Bigg)\\
+            \SUBJECTTO  &   \M{J}_{\TRAN,j}
+                            \ddotV{q}
+                            +
+                            \dotM{J}_{\TRAN,j}
+                            \dotV{q}
+                            \ge
+                            \V{b}_j,
+    \end{aligned}
+\end{equation}
+%
+and drop the constant terms
+%
+\begin{equation}
+    \begin{aligned}
+            \MINIMIZE{\ddot{q}}
+                        & \sum_{k=1}^{n+1}
+                            \left(
+                            \frac{1}{2} \T{(\M{J}_k \ddotV{q})}  \M{H}_k  \M{J}_k \ddotV{q}
+                            +
+                            \T{(\M{J}_k \ddotV{q})}  \M{H}_k  \dotM{J}_k \dotV{q}
+                            -
+                            \T{(\M{J}_k \ddotV{q})}
+                            \begin{bmatrix}
+                                \V{f}_k\\
+                                \moment_k - \V{\omega}_k \CROSS \INERTIA_k \V{\omega}_k \\
+                            \end{bmatrix}
+                            \right)\\
+            \SUBJECTTO  &   \M{J}_{\TRAN,j}
+                            \ddotV{q}
+                            +
+                            \dotM{J}_{\TRAN,j}
+                            \dotV{q}
+                            \ge
+                            \V{b}
+    \end{aligned}
+\end{equation}
+%
+
+
+\ac{KKT} optimality conditions for the considered problem are stated as a
+complementarity system \cite{Nocedal2006numopt}
+\begin{subequations}\label{eq.kkt_dynamics}
+\begin{empheq}[left=\empheqlbrace]{align}
+    &   \sum_{k=1}^{n+1}
+        \left(
+            \T{\M{J}_k}  \M{H}_k  \M{J}_k \ddotV{q}
+            +
+            \T{\M{J}_k}  \M{H}_k  \dotM{J}_k \dotV{q}
+            -
+            \T{\M{J}_k}
+            \begin{bmatrix}
+                \V{f}_k\\
+                \moment_k - \V{\omega}_k \CROSS \INERTIA_k \V{\omega}_k \\
+            \end{bmatrix}
+        \right)
+        -
+        \T{\M{J}_{\TRAN,j}}
+        \V{\Lambda}
+        = 0, \label{eq.kkt_dynamics.dynamics}\\
+    &   \M{J}_{\TRAN,j}
+        \ddotV{q}
+        +
+        \dotM{J}_{\TRAN,j}
+        \dotV{q}
+        \ge
+        \V{b},\\
+    &   \V{\Lambda} \ge \V{0},\\
+    &   \T{\V{\Lambda}}
+        \left(
+            \M{J}_{\TRAN,j}
+            \ddotV{q}
+            +
+            \dotM{J}_{\TRAN,j}
+            \dotV{q}
+            -
+            \V{b}
+        \right)
+        =
+        \V{0},
+\end{empheq}
+\end{subequations}
+where $\V{\Lambda}$ is the vector of Lagrange multipliers.
+System~\cref{eq.kkt_dynamics} corresponds to the complementarity system
+presented in \cref{sec.whole_body_model}: the first line is the equation of
+dynamics of the whole system and $\V{\Lambda}$ correspond to the contact
+forces.
+
+
+We further modify \cref{eq.kkt_dynamics.dynamics} by substituting
+$\V{\omega}_k = \M{J}_{\ROT,k} \dotV{q}$ and moving all forces to the right
+side:
+%
+\begin{equation}\label{eq.lagrangian_dynamics}
+    \underbrace{
+        \sum_{k=1}^{n+1}
+        \left(
+            \T{\M{J}_k}  \M{H}_k  \M{J}_k
+        \right)
+    }_{\M{H}}
+    \ddotV{q}
+    +
+    \underbrace{
+        \sum_{k=1}^{n+1}
+        \left(
+            \T{\M{J}_k}  \M{H}_k  \dotM{J}_k \dotV{q}\\
+            +
+            \T{\M{J}_{\ROT,k}}
+            ((\M{J}_{\ROT,k} \dotV{q}) \CROSS \INERTIA_k \M{J}_{\ROT,k} \dotV{q})
+        \right)
+    }_{\V{h}}
+    =
+    \sum_{k=1}^{n+1}
+    \T{\M{J}_k}
+    \begin{bmatrix}
+        \V{f}_k\\
+        \moment_k\\
+    \end{bmatrix}
+    +
+    \T{\M{J}_{\TRAN,j}}
+    \V{\Lambda}.
+\end{equation}
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Structure of the equation of dynamics}
+
+In this section we employ our knowledge of the structure of Jacobians to
+explore the structure of components of Equation~\cref{eq.lagrangian_dynamics}.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Inertia matrix}
+
+Expansion of the Jacobians exposes the structure of inertia matrix as shown
+below
+%
+\begin{subequations}
+\begin{align}
+    \M{H}
+    & =
+    \sum_{k=1}^{n+1}
+    \T{\M{J}_k}  \M{H}_k  \M{J}_k \\
+    & =
+    \sum_{k=1}^{n+1}
+    m_k \T{\M{J}_{\TRAN,k}}  \M{J}_{\TRAN,k}
+    +
+    \sum_{k=1}^{n+1}
+    \T{\M{J}_{\ROT,k}}  \INERTIA_k  \M{J}_{\ROT,k} \\
+    & =
+    \sum_{k=1}^{n+1}
+    \left(
+        m_k
+        \begin{bmatrix}
+            \T{\M{J}_{\TRAN,k,1}}  \M{J}_{\TRAN,k}\\
+            \T{\M{J}_{\TRAN,k,2}}  \M{J}_{\TRAN,k}\\
+            \T{\M{J}_{\TRAN,k,3}}  \M{J}_{\TRAN,k}\\
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            \T{\M{J}_{\ROT,k,1}} \INERTIA_k \M{J}_{\ROT,k}\\
+            \T{\M{J}_{\ROT,k,2}} \INERTIA_k \M{J}_{\ROT,k}\\
+            \T{\M{J}_{\ROT,k,3}} \INERTIA_k \M{J}_{\ROT,k}\\
+        \end{bmatrix}
+    \right)\\
+    \begin{split}
+    &
+    =
+    \sum_{k=1}^{n+1}
+    \Bigg(
+        m_k
+        \begin{bmatrix}
+            \T{\M{J}_{\TRAN,k,1}}  \M{J}_{\TRAN,k,1}                    & \T{\M{J}_{\TRAN,k,1}}                 & - \T{\M{J}_{\TRAN,k,1}}  \CROSS[(\V{c}_k - \V{r})] \Teuler\\
+            \M{J}_{\TRAN,k,1}                                           & \V{I}_3                               & - \CROSS[(\V{c}_k - \V{r})] \Teuler\\
+            \T{\Teuler} \CROSS[(\V{c}_k - \V{r})]  \M{J}_{\TRAN,k,1}  & \T{\Teuler} \CROSS[(\V{c}_k - \V{r})] & - \T{\Teuler} \CROSS[(\V{c}_k - \V{r})] \CROSS[(\V{c}_k - \V{r})] \Teuler\\
+        \end{bmatrix}\\
+        & \quad \quad \quad \quad +
+        \begin{bmatrix}
+            \T{\M{J}_{\ROT,k,1}} \INERTIA_k \M{J}_{\ROT,k,1}    & \M{0}_{n,3} & \T{\M{J}_{\ROT,k,1}} \INERTIA_k \Teuler\\
+            \M{0}_{3,n}                                         & \M{0}_{3,3} & \M{0}_{3,3}\\
+            \T{\Teuler} \INERTIA_k \M{J}_{\ROT,k,1}             & \M{0}_{3,3} & \T{\Teuler} \INERTIA_k \Teuler\\
+        \end{bmatrix}
+    \Bigg)
+    \end{split}
+    \label{eq.inertia_structure.long_line}
+    \\
+    & =
+    \sum_{k=1}^{n+1}
+    \left(
+        m_k
+        \begin{bmatrix}
+            \T{\M{J}_{\TRAN,k,1}}  \M{J}_{\TRAN,k}\\
+            \M{J}_{\TRAN,k}                     \\
+            \T{\Teuler} \CROSS[(\V{c}_k - \V{r})] \M{J}_{\TRAN,k}\\
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            \T{\M{J}_{\ROT,k,1}} \INERTIA_k \M{J}_{\ROT,k}\\
+            \M{0}_{n+6,3}                                              \\
+            \T{\Teuler} \INERTIA_k \M{J}_{\ROT,k}\\
+        \end{bmatrix}
+    \right)
+    =
+    \begin{bmatrix}
+        \M{H}_{1} \\
+        \M{H}_{2} \\
+        \M{H}_{3} \\
+    \end{bmatrix}
+\end{align}
+\end{subequations}
+%
+
+It is worth noting that the structure of the inertia matrix simplifies when the
+base $\V{r}$ is chosen to coincide with the \ac{CoM} $\V{c}$. In this case some
+of the components of $\M{H}$ are equal to zero due to
+%
+\begin{equation}
+    \sum_{k=1}^{n+1}
+        m_k \CROSS[(\V{c}_k - \V{r})]
+    =
+    \sum_{k=1}^{n+1}
+        \CROSS[(m_k \V{c}_k - m_k \V{c})]
+    =
+    \CROSS[\left(m \V{c} - \sum_{k=1}^{n+1} (m_k \V{c})\right)]
+    =
+    \CROSS[(\M{0}_{3,1})]
+    =
+    \M{0}_{3,3}.
+\end{equation}
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Nonlinear term}
+%
+\begin{equation}
+\begin{aligned}
+    &\V{h}
+     =
+    \sum_{k=1}^{n+1}
+    \left(
+        \M{J}_k^T  \M{H}_k  \dotM{J}_k \dotV{q}
+        +
+        \M{J}_{\ROT,k}^T
+        ((\M{J}_{\ROT,k} \dotV{q}) \CROSS \INERTIA_k \M{J}_{\ROT,k} \dotV{q})
+    \right)\\
+    & =
+    \sum_{k=1}^{n+1}
+    \left(
+        m_k
+        \begin{bmatrix}
+            \M{J}_{\TRAN,k,1}^T  \dotM{J}_{\TRAN,k} \dotV{q}\\
+            \dotM{J}_{\TRAN,k} \dotV{q}                     \\
+            \T{\Teuler} \CROSS[(\V{c}_k - \V{r})] \dotM{J}_{\TRAN,k} \dotV{q}\\
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            \M{J}_{\ROT,k,1}^T \INERTIA_k \dotM{J}_{\ROT,k} \dotV{q} + \M{J}_{\ROT,k,1}^T ((\M{J}_{\ROT,k} \dotV{q}) \CROSS \INERTIA_k \M{J}_{\ROT,k} \dotV{q})\\
+            \M{0}_{3,1} \\
+            \T{\Teuler} \INERTIA_k \dotM{J}_{\ROT,k} \dotV{q}        + \T{\Teuler} ((\M{J}_{\ROT,k} \dotV{q}) \CROSS \INERTIA_k \M{J}_{\ROT,k} \dotV{q})\\
+        \end{bmatrix}
+    \right)
+    \\
+    & =
+    \begin{bmatrix}
+        \M{h}_{1} \\
+        \M{h}_{2} \\
+        \M{h}_{3} \\
+    \end{bmatrix}
+\end{aligned}
+\end{equation}
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Forces}
+
+Assuming that the wrenches $(\V{f}_k, \moment_k)$ are the result of gravity
+field and joint torques we obtain
+%
+\begin{equation}
+    \sum_{k=1}^{n+1}
+    \T{\M{J}_k}
+    \begin{bmatrix}
+        \V{f}_k\\
+        \moment_k\\
+    \end{bmatrix}
+    +
+    \T{\M{J}_{\TRAN,j}}
+    \V{\Lambda}
+    =
+    \sum_{k=1}^{n+1}
+    \left(
+        m_k
+        \begin{bmatrix}
+            \M{J}_{\TRAN,k,1}^T\\
+            \M{I}_3                     \\
+            \T{\Teuler} \CROSS[(\V{c}_k - \V{r})]\\
+        \end{bmatrix}
+    \right)
+    \V{g}
+    +
+    \Itorques
+    \torques
+    +
+    \begin{bmatrix}
+        \M{J}_{\TRAN,j,1}^T\\
+        \M{I}_3                     \\
+        \T{\Teuler} \CROSS[(\V{c}_j - \V{r})]\\
+    \end{bmatrix}
+    \V{\Lambda}.
+\end{equation}
+%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Momenta of the system}\label{sec.momenta_structure}
+
+Consider the lower $6$ lines of the equation of dynamics:
+%
+\begin{equation}
+\begin{aligned}
+    &
+    \begin{bmatrix}
+        \M{I}_3   &   \M{0}_{3,3} \\
+        \M{0}_{3,3}   &   \T{\Teuler}\\
+    \end{bmatrix}
+    \Bigg(
+        \sum_{k=1}^{n+1}
+        \left(
+            m_k
+            \begin{bmatrix}
+                \M{J}_{\TRAN,k}                     \\
+                \CROSS[(\V{c}_k - \V{r})] \M{J}_{\TRAN,k}\\
+            \end{bmatrix}
+            +
+            \begin{bmatrix}
+                \M{0}_{3,n+6}                                              \\
+                \INERTIA_k \M{J}_{\ROT,k}\\
+            \end{bmatrix}
+        \right)
+        \ddotV{q}
+        \\
+        &+
+        \sum_{k=1}^{n+1}
+        \left(
+            m_k
+            \begin{bmatrix}
+                \dotM{J}_{\TRAN,k} \dotV{q}                     \\
+                \CROSS[(\V{c}_k - \V{r})] \dotM{J}_{\TRAN,k} \dotV{q}\\
+            \end{bmatrix}
+            +
+            \begin{bmatrix}
+                \M{0}_{3,1}                                              \\
+                \INERTIA_k \dotM{J}_{\ROT,k} \dotV{q}\\
+            \end{bmatrix}
+            +
+            \begin{bmatrix}
+                \M{0}_{3,1}                                          \\
+                ((\M{J}_{\ROT,k} \dotV{q}) \CROSS \INERTIA_k \M{J}_{\ROT,k} \dotV{q})\\
+            \end{bmatrix}
+        \right)
+    \Bigg)
+    \\
+    & =
+    \begin{bmatrix}
+        \M{I}_3   &   \M{0}_{3,3} \\
+        \M{0}_{3,3}   &   \T{\Teuler}\\
+    \end{bmatrix}
+    \Bigg(
+        \sum_{k=1}^{n+1}
+        \left(
+            m_k
+            \begin{bmatrix}
+                \M{I}_3                     \\
+                \CROSS[(\V{c}_k - \V{r})]\\
+            \end{bmatrix}
+        \right)
+        \V{g}
+        +
+        \begin{bmatrix}
+            \M{I}_3                     \\
+            \CROSS[(\V{c}_j - \V{r})]\\
+        \end{bmatrix}
+        \V{\Lambda}
+    \Bigg)
+    .
+\end{aligned}
+\end{equation}
+%
+%
+This is the Newton-Euler equation of the whole system multiplied by the
+constant matrix $\diag{}{\M{I}_3, \T{\Teuler}}$ \cite{Wieber2006fastmotions}.
+The right hand side of the equation gives the total wrench acting at the
+reference point $\V{r}$ of the system, hence
+%
+\begin{equation}
+\begin{aligned}
+    &\sum_{k=1}^{n+1}
+    \left(
+        m_k
+        \begin{bmatrix}
+            \M{J}_{\TRAN,k}                     \\
+            \CROSS[(\V{c}_k - \V{r})] \M{J}_{\TRAN,k}\\
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            \M{0}_{3,n+6}                                              \\
+            \INERTIA_k \M{J}_{\ROT,k}\\
+        \end{bmatrix}
+    \right)
+    \ddotV{q}
+    \\
+    &+
+    \sum_{k=1}^{n+1}
+    \left(
+        m_k
+        \begin{bmatrix}
+            \dotM{J}_{\TRAN,k} \dotV{q}                     \\
+            \CROSS[(\V{c}_k - \V{r})] \dotM{J}_{\TRAN,k} \dotV{q}\\
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            \M{0}_{3,1}                                              \\
+            \INERTIA_k \dotM{J}_{\ROT,k} \dotV{q}\\
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            \M{0}_{3,1}                                              \\
+            ((\M{J}_{\ROT,k} \dotV{q}) \CROSS \INERTIA_k \M{J}_{\ROT,k} \dotV{q})\\
+        \end{bmatrix}
+    \right)
+    \\
+    &=
+    \begin{bmatrix}
+        \M{I}_3   &   \M{0}_{3,3} \\
+        \M{0}_{3,3}   &   \TI{\Teuler}\\
+    \end{bmatrix}
+    \left(
+        \begin{bmatrix}
+            \M{H}_2\\
+            \M{H}_3\\
+        \end{bmatrix}
+        \ddotV{q}
+        +
+        \begin{bmatrix}
+            \M{h}_2\\
+            \M{h}_3\\
+        \end{bmatrix}
+    \right)
+    =
+    \begin{bmatrix}
+        \dotV[r]{\LM}\\
+        \dotV[r]{\AM}
+    \end{bmatrix},
+\end{aligned}
+\end{equation}
+%
+where $\dotV[r]{\LM}$ and $\dotV[r]{\AM}$ are the rates of linear and angular
+momenta of the system expressed in frame $\FRAME{r}$. Integration of this
+equation allows to compute the momenta as
+%
+\begin{equation}
+    \sum_{k=1}^{n+1}
+    \left(
+        m_k
+        \begin{bmatrix}
+            \M{J}_{\TRAN,k}                     \\
+            \CROSS[(\V{c}_k - \V{r})] \M{J}_{\TRAN,k}\\
+        \end{bmatrix}
+        +
+        \begin{bmatrix}
+            \M{0}_{3,n+6}                                              \\
+            \INERTIA_k \M{J}_{\ROT,k}\\
+        \end{bmatrix}
+    \right)
+    \dotV{q}
+    =
+    \begin{bmatrix}
+        \M{I}_3   &   \M{0}_{3,3} \\
+        \M{0}_{3,3}   &   \TI{\Teuler}\\
+    \end{bmatrix}
+    \begin{bmatrix}
+        \M{H}_2\\
+        \M{H}_3\\
+    \end{bmatrix}
+    \dotV{q}
+    =
+    \begin{bmatrix}
+        \V[r]{\LM}\\
+        \V[r]{\AM}
+    \end{bmatrix}.
+\end{equation}
+%
+Then, assuming that frame $\FRAME{r}$ has the same orientation as the global
+frame
+%
+\begin{equation}
+    \V[r]{\LM} = \V{\LM} = m \dotV{c} =
+    \sum_{k=1}^{n+1}
+    \left(
+        m_k \M{J}_{\TRAN,k}
+    \right)
+    \dotV{q},
+    \quad
+    \dotV{c}
+    =
+    \left(
+        \frac{1}{m}
+        \sum_{k=1}^{n+1}
+            m_k \M{J}_{\TRAN,k}
+    \right)
+    \dotV{q}
+    =
+    \Jcom
+    \dotV{q},
+\end{equation}
+%
+where $\Jcom$ is Jacobian of the \ac{CoM} in accordance with
+\cite{Sugihara2002iros, Espiau1998report}.
+
+
+Often, it is more convenient to work with momenta $\V{\LM}$ and $\V{\AM}$
+expressed in a frame $\FRAME{c}$ fixed to the \ac{CoM} of the system
+\cite{Orin2013auro}. If this frame has the same orientation as frame
+$\FRAME{r}$ transformation of the linear momentum is not needed $\V[c]{\LM} =
+\V[r]{\LM}$. In order to transform angular momentum we use $\V[r]{\AM} =
+\V[c]{\AM} + m \V[r]{c} \CROSS \dotV[r]{c}$, where $\V[r]{c} = \V{c} - \V{r}$
+is the vector from the base to the \ac{CoM}:
+%
+\begin{equation}\label{eq.angular_momentum_com}
+    \V[c]{\AM}
+    =
+    \V[r]{\AM} - m \V[r]{c} \CROSS \dotV[r]{c}
+    =
+    \V[r]{\AM}
+    -
+    m
+    \V[r]{c}
+    \CROSS
+    (
+        \Jcom
+        \dotV{q}
+    )
+    =
+    \V[r]{\AM}
+    -
+    \V[r]{c}
+    \CROSS
+    \V[r]{\LM}.
+\end{equation}
+%
+Rate of the angular momentum $\dotV[c]{\AM}$ is computed by differentiating
+\cref{eq.angular_momentum_com}:
+%
+\begin{equation}
+    \dotV[c]{\AM}
+    =
+    \dotV[r]{\AM}
+    -
+    \dotV{c}
+    \CROSS
+    \V[r]{\LM}
+    -
+    \V[r]{c}
+    \CROSS
+    \dotV[r]{\LM}.
+\end{equation}
+%
+Note, that computation of momenta with respect to the \ac{CoM} as suggested in
+\cite{Orin2013auro} is equivalent to computation of the equation of dynamics
+with $\V{r} = \V{c}$, and it is unnecessary if equation of dynamics with $\V{r}
+\neq \V{c}$ is already constructed.

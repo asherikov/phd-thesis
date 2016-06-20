@@ -1,0 +1,191 @@
+%-------------------------------------------------------------------------------
+\chapter{Trajectory of a foot in the air}
+\label{app.swing_foot}
+\acresetall
+%-------------------------------------------------------------------------------
+
+Trajectory of a foot in the air (\tn{swing foot}) is generated using cubic
+polynomial of the form
+%
+\begin{equation}
+    a_{\alpha} t^3 + b_{\alpha} t^2 + c_{\alpha}t + d_{\alpha} = s^{\alpha}_t,
+\end{equation}
+%
+where $\alpha \in \{x,y,z\}$ denotes coordinate axis, $t$ is time instant,
+$a_{\alpha},b_{\alpha},c_{\alpha},d_{\alpha}$ are coefficients, and
+$s^{\alpha}_t$ is position of the swing foot at time $t$. Derivatives of the
+cubic polynomial are
+%
+\begin{equation}\label{eq.swtraj_derivatives}
+\begin{split}
+    & 3a_{\alpha} t^2 + 2b_{\alpha} t + c_{\alpha} = \dot{s}^{\alpha}_t,\\
+    & 6a_{\alpha} t + 2b_{\alpha} = \ddot{s}^{\alpha}_t,\\
+    & 6a_{\alpha} = \dddot{s}^{\alpha}_t.\\
+\end{split}
+\end{equation}
+%
+There are four boundary conditions for the polynomial, the first two are
+defined for the current swing foot state at $t = 0$:
+%
+\begin{equation}\label{eq.swtraj_bc1}
+\begin{split}
+    & d_{\alpha} = s^{\alpha}_0, \\
+    & c_{\alpha} = \dot{s}^{\alpha}_0, \\
+\end{split}
+\end{equation}
+%
+where $s^{\alpha}_0$ and $\dot{s}^{\alpha}_0$ are initial position and
+velocity. The remaining two conditions for landing time instant $t = l$ are:
+%
+\begin{equation}\label{eq.swtraj_bc2}
+\begin{split}
+    & a_{\alpha} l^3 + b_{\alpha} l^2 + \dot{s}^{\alpha}_0 l + s^{\alpha}_0 = s^{\alpha}_l,\\
+    & 3a_{\alpha} l^2 + 2b_{\alpha} l + \dot{s}^{\alpha}_0 = \dot{s}^{\alpha}_l.
+\end{split}
+\end{equation}
+%
+
+
+Final position $s^{z}_l$ for trajectory along the $z$ axis is set to the step
+height during the first half of the step and to $0$ during the second half:
+%
+\begin{equation}
+    s^{z}_l =
+    \left\{
+        \begin{array}{ll}
+            h   & t \le \frac{T_{step}}{2}; \\
+            0   & t > \frac{T_{step}}{2}. \\
+        \end{array}
+    \right.
+\end{equation}
+%
+The final $x,y$ positions are set to the next landing position (see the
+\nameref{model.PPMZ} model)
+%
+\begin{equation}
+    \begin{bmatrix}
+        s^{x}_l\\
+        s^{y}_l\\
+    \end{bmatrix}
+    =
+    \hat{\contact}_{1}
+    =
+    \hat{\contact}_{0} + \hatM{B}_0\Delta\hat{\contact}_{0}.
+\end{equation}
+%
+Velocity at the end of trajectory is set to zero $\dot{s}^{\alpha}_l = 0$.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Computation of the foot acceleration}
+
+Whole body control requires current acceleration (at time $0$) of the swing
+foot, which can be found as
+%
+\begin{equation}\label{eq.swtraj_acc1}
+    2b_{\alpha} = \ddot{s}^{\alpha}_0.
+\end{equation}
+%
+Hence it is necessary to find coefficients $b_{\alpha}$ from
+equations~\cref{eq.swtraj_bc1} and~\cref{eq.swtraj_bc2}.
+
+
+Trivial algebraic operations on \cref{eq.swtraj_bc2} and \cref{eq.swtraj_acc1}
+lead to the following equation:
+%
+\begin{equation}\label{eq.swtraj_acc2}
+    \ddot{s}^{\alpha}_0
+    =
+    \frac{6(s^{\alpha}_l - s^{\alpha}_0)}{l^2} - \frac{4\dot{s}^{\alpha}_0}{l}
+    =
+    \frac{6}{l^2} s^{\alpha}_l
+    -
+    \frac{6}{l^2} s^{\alpha}_0
+    -
+    \frac{4}{l} \dot{s}^{\alpha}_0.
+\end{equation}
+%
+Consequently,
+%
+\begin{equation}
+    \ddotV{s}_{0}
+    =
+    \begin{bmatrix}
+        \ddotV{s}_0^{xy}\\
+        \ddot{s}_0^z\\
+    \end{bmatrix}
+    =
+    \underbrace{
+        \frac{6}{l^2}
+        \begin{bmatrix}
+            \hatM{B}_0 \\
+            0
+        \end{bmatrix}
+    }_{\objA_{\MT{sa}}}
+    \Delta\hat{\contact}_{0}
+    +
+    \underbrace{
+        \frac{6}{l^2}
+        \begin{bmatrix}
+            \hat{\contact}_{0} \\
+            {s}_l^z
+        \end{bmatrix}
+        -
+        \frac{6}{l^2}
+        \V{s}_0
+        -
+        \frac{4}{l}
+        \dotV{s}_0
+    }_{\V{\objb}_{\MT{sa}}},
+\end{equation}
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Computation of the foot jerk}
+
+The footstep adjustments are allowed during the whole duration of a step, which
+may result in violent position changes near the end of a step. A
+straightforward workaround is to block footstep adaptation when the foot
+approaches the ground. Instead, we have chosen to minimize the $x,y$ components
+of the foot jerk.
+
+
+Using \cref{eq.swtraj_bc2} and \cref{eq.swtraj_derivatives} we find the jerk as
+%
+\begin{equation}\label{eq.swtraj_jerk}
+    \dddot{s}^{\alpha}
+    =
+    -
+    \frac{12}{l^3} s^{\alpha}_l
+    +
+    \frac{12}{l^3} s^{\alpha}_0
+    +
+    \frac{6}{l} \dot{s}^{\alpha}_0.
+\end{equation}
+%
+Therefore, the $x,y$ components of the foot jerk are expressed as
+%
+\begin{equation}
+    \dddotV{s}^{xy}
+    =
+    \underbrace{
+        -
+        \frac{12}{l^3}
+        \hatM{B}_0
+    }_{\objA_{\MT{sj}}}
+    \Delta\hat{\contact}_{0}
+    +
+    \underbrace{
+        -
+        \frac{12}{l^3}
+        \hat{\contact}_{0}
+        +
+        \frac{12}{l^3}
+        s^{xy}_0
+        +
+        \frac{6}{l^2}
+        \dot{s}^{xy}_0
+    }_{\V{\objb}_{\MT{sj}}}
+    .
+\end{equation}

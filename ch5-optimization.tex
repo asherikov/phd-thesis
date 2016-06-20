@@ -1,0 +1,900 @@
+%-------------------------------------------------------------------------------
+\chapter{Prioritized Linear Least-Squares Optimization}
+\label{ch.optimization}
+\acresetall
+%-------------------------------------------------------------------------------
+
+Whole-body motion control and motion anticipation problems considered in
+\cref{ch.modeling,ch.mpc} fall within the framework of \ac{PLLS} optimization,
+which is the topic of the present chapter. We briefly outline the general
+concepts behind \ac{PLLS} optimization in
+\cref{sec.least_square_intro,sec.prioritization} without going into details of
+the algorithms for solution of \ac{PLLS} problems. In the following
+\cref{sec.pllso_examples} we present a number of examples of \ac{PLLS} problems
+used in our works. \cref{sec.hierarchy_efficiency} lists a few general
+techniques, which allow for increasing the computational performance of the
+\ac{PLLS} solvers.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Introduction to Linear Least Squares Optimization}\label{sec.least_square_intro}
+
+The basic building block of the \ac{PLLS} framework is a system of linear
+inequalities
+%
+\begin{equation}\label{eq.basic_ls_ineq}
+    \ubarV{\objb}
+    \le
+    \objA \x
+    \le
+    \barV{\objb}
+    ,
+\end{equation}
+%
+where $\x$ is the vector of decision variables, $\objA$ is some matrix,
+$\ubarV{\objb}$ and $\barV{\objb}$ are vectors of lower and upper bounds. This
+system is satisfied in the least-squares sense, and, hence, can be posed as a
+\ac{QP}
+%
+\begin{equation}\label{eq.basic_ls_opt}
+    \begin{aligned}
+        \MINIMIZE{\x, \violation} & \NORME{\violation}^2 \\
+        \SUBJECTTO              & \ubarV{\objb} \le \objA \x  -  \violation \le \barV{\objb},
+    \end{aligned}
+\end{equation}
+%
+where vector $\violation$ contains \tn{violations} of the respective inequalities
+\cite{Bramley1994jsc, Escande2014ijrr}. A solution $(\x^\star, \violation^\star)$ of
+\eqref{eq.basic_ls_opt} always exists, but may be nonunique.
+
+
+In the rest of the thesis we call a system of inequalities in the form
+\cref{eq.basic_ls_ineq} an \tn{objective}, individual inequality in an
+objective is called a \tn{constraint}. For convenience, constraints in an
+objective are subdivided into groups called \tn{tasks}, since they often
+correspond to tasks of the whole body motion control introduced in
+\cref{sec.wbm_control}. We presume that all objectives are satisfied in the
+least-squares sense, therefore, vectors of violations $\violation$ are usually
+omitted for simplicity. We also presume, that systems of constraints are solved
+using an \tn{active set} strategy \cite[Chapter~16]{Nocedal2006numopt}. Many
+presentational choices of this chapter are dictated by the intrinsic properties
+of active set strategies, whose key idea is iterative \tn{activation} and
+\tn{deactivation} of inequality constraints in the search for a solution. A
+constraint is called \tn{active} if it holds as an equality, \IE, equality
+constraints with $\ubarV{\objb} = \barV{\objb}$ are always active, inequality
+constraints are active when their bounds are reached or violated.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Prioritization of objectives}\label{sec.prioritization}
+
+Let us consider an equality objective composed of two tasks
+%
+\begin{equation}\label{eq.two_tasks_weighted}
+    \begin{bmatrix}
+        \gamma_1 \objA_1 \\
+        \gamma_2 \objA_2 \\
+    \end{bmatrix}
+    \x
+    =
+    \begin{bmatrix}
+        \gamma_1 \V{\objb}_1 \\
+        \gamma_2 \V{\objb}_2 \\
+    \end{bmatrix}
+    ,
+\end{equation}
+%
+where $\gamma_1$ and $\gamma_2$ are positive scalars. This objective
+corresponds to the multicriterion optimization problem
+\cite[Chapter~4]{Boyd2004conopt}
+%
+\begin{equation}
+    \begin{aligned}
+        \MINIMIZE{\x}    &   \gamma_1^2 \NORME{\objA_1 \x - \V{\objb}_1}^2 + \gamma_2^2 \NORME{\objA_2 \x - \V{\objb}_2}^2. \\
+    \end{aligned}
+\end{equation}
+%
+Tasks are said to be compatible, if they are violated to the same extent when
+combined into an objective and when satisfied independently from each other.
+Weights $\gamma_1$ and $\gamma_2$ determine a trade-off between incompatible
+tasks, and have no effect otherwise.
+
+
+In many practical situations trade-offs between tasks are unacceptable, since
+some of the tasks have \tn{strictly} (or \tn{infinitely}) higher priority than
+others. The classic example of such strict prioritization is \tn{The Three Laws
+of Robotics} introduced by Isaac Asimov in his science-fiction works
+\cite{ThreeLaws}:
+%
+\begin{hierarchy}
+    \level \tn{A robot may not injure a human being or, through inaction, allow
+    a human being to come to harm.}
+
+    \level \tn{A robot must obey the orders given it by human beings, except
+    where such orders would conflict with the First Law.}
+
+    \level \tn{A robot must protect its own existence as long as such
+    protection does not conflict with the First or Second Laws.}
+\end{hierarchy}
+%
+A set of tasks organized in accordance with their priorities is called a
+\tn{hierarchy} or \tn{stack of tasks} \cite{Mansard2009tro}.
+
+
+Let us assign strictly higher priority to the first task in
+\cref{eq.two_tasks_weighted} to obtain the hierarchy composed of two objectives
+%
+\begin{hierarchy}[hr.two_tasks_prioritized]
+    \level $\objA_1 \x = \V{\objb}_1$
+    \level $\objA_2 \x = \V{\objb}_2$
+\end{hierarchy}
+%
+where weights $\gamma_1$ and $\gamma_2$ are meaningless and therefore omitted.
+Hierarchies of such form were originally introduced in the field of robotics to
+exploit \tn{redundancy} of manipulators with respect to the primary objective
+\cite{Liegeois1977tsmc}. The secondary objective is then used to express
+preferences in the way of execution of the primary objective, which can be
+realized nonuniquely. Prioritization prevents degradation of performance of the
+primary objective due to secondary objectives.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Solving a hierarchy}
+
+The classic way to obtain the solution of \cref{hr.two_tasks_prioritized} is to
+perform null space projections using a generalized pseudoinverse $(\cdot)^{\#}$
+\cite{Siciliano1991icar}:
+%
+\begin{equation}
+    \x^{\star}
+    =
+    \objA_1^{\#}
+    \V{\objb}_1
+    +
+    \left(
+        \objA_2
+        (
+            \M{I}
+            -
+            \objA_1^{\#}
+            \objA_1
+        )
+    \right)^{\#}
+    (
+        \V{\objb}_2
+        -
+        \objA_2
+        \objA_1^{\#}
+        \V{\objb}_1
+    )
+\end{equation}
+%
+An arbitrary number of priority levels can be handled with iterative projections.
+
+
+Projections have a number of disadvantages, in particular, they do not account
+for inequalities. This drawback was addressed in \cite{Kanoun2011tro} using
+cascades of \ac{QP}'s. For example, a hierarchy of two inequality objectives
+%
+\begin{hierarchy}[hr.two_inequality_objectives]
+    \level $\ubarV{\objb}_1 \le \objA_1 \x \le \barV{\objb}_1$
+    \level $\ubarV{\objb}_2 \le \objA_2 \x \le \barV{\objb}_2$
+\end{hierarchy}
+%
+can be solved with two \ac{QP}'s:
+%
+\begin{enumerate}
+    \item First, we find minimal violation of the first objective
+        $\violation_1^{\star}$ using
+        %
+        \begin{equation}
+            \begin{aligned}
+                \MINIMIZE{\x,\violation_1}  & \NORME{\violation_1}^2 \\
+                \SUBJECTTO                  & \ubarV{\objb}_1 \le \objA_1 \x - \violation_1 \le \barV{\objb}_1.
+            \end{aligned}
+        \end{equation}
+        %
+
+    \item Then the optimal violation of the second objective is determined with
+        %
+        \begin{equation}
+            \begin{aligned}
+                \MINIMIZE{\x,\violation_2}  & \NORME{\violation_2}^2 \\
+                \SUBJECTTO                  & \ubarV{\objb}_1 \le \objA_1 \x - \violation_1^{\star} \le \barV{\objb}_1\\
+                                            & \ubarV{\objb}_2 \le \objA_2 \x - \violation_2 \le \barV{\objb}_2.
+            \end{aligned}
+        \end{equation}
+        %
+\end{enumerate}
+%
+A similar approach was proposed in the field of \ac{MPC} to cope with
+infeasibilities of constraints \cite{Vada1999ifac}.
+
+
+Recent developments in numerical methods, however, allow for solution of
+hierarchies with equalities and inequalities in much more efficient way than
+null space projections and cascades of \ac{QP}'s \cite{Escande2014ijrr,
+Dimitrov2015preprint}. Efficiency is achieved using dedicated active set
+strategies, one of which was implemented in our research group in the software
+package \sn{LexLS} \cite{Dimitrov2015preprint}. \sn{LexLS} is the primary
+optimization tool employed in this thesis.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Singularities and regularization}\label{sec.regularization}
+
+It is recognized that solvers for hierarchies may experience numerical
+difficulties near singularities \cite{Siciliano1991icar, Deo1995jirs,
+Kanoun2011tro}. In robotic applications this leads to control inputs taking
+unacceptably high values, if unconstrained, or flipping between the bounds at
+high frequency otherwise.
+
+
+
+One way to cope with deteriorated behavior near singularities is to introduce
+regularization. Standard \tn{Tikhonov regularization} is implemented by
+extending the $\ell$-th objective as follows
+%
+\begin{equation}\label{eq.tikhonov_regularization}
+    \begin{bmatrix}
+        \ubarV{\objb}_{\ell} \\
+        \V{0} \\
+    \end{bmatrix}
+    \le
+    \begin{bmatrix}
+        \objA_{\ell} \\
+        \gamma_{r,\ell} \V{I} \\
+    \end{bmatrix}
+    \x
+    \le
+    \begin{bmatrix}
+        \barV{\objb}_{\ell} \\
+        \V{0} \\
+    \end{bmatrix}
+    ,
+\end{equation}
+%
+where $\gamma_{r,\ell} \in \RR_{\ge 0}$ is a \tn{damping factor}, which is used
+to trade-off accuracy of the solution with the norm of $\x^{\star}$. The best
+results are achieved, when the value of $\gamma_{r,\ell}$ is chosen
+automatically and is fading to zero far from singularities. The objective
+\cref{eq.tikhonov_regularization} corresponds to the \ac{QP}
+%
+\begin{equation}
+    \begin{aligned}
+        \MINIMIZE{\x, \violation_{\ell}} & \NORME{\violation_{\ell}}^2 + \gamma_{r,\ell}^2 \NORME{\x}^2\\
+        \SUBJECTTO                  & \ubarV{\objb}_j \le \objA_j \x  -  \violation_j^{\star} \le \barV{\objb}_j,   && j \in \{1, ..., \ell-1\}, \\
+                                    & \ubarV{\objb}_{\ell} \le \objA_{\ell} \x  -  \violation_{\ell} \le \barV{\objb}_{\ell}.
+    \end{aligned}
+\end{equation}
+%
+Note that this optimization problem has a unique solution $\x$. When a cascade
+of \ac{QP}'s is used to solve the hierarchy, this means that the regularizing
+task $\gamma_{r,\ell} \V{I} \x = \V{0}$ must be omitted in $\ell+1$ \ac{QP} in
+order to be able to execute objectives of lower importance
+\cite[Chapter~3]{Kanoun2009thesis}
+%
+\begin{equation}
+    \begin{aligned}
+        \MINIMIZE{\x, \violation_{\ell+1}} & \NORME{\violation_{\ell+1}}^2\\
+        \SUBJECTTO                      & \ubarV{\objb}_j \le \objA_j \x  -  \violation_j^{\star} \le \barV{\objb}_j,  && j \in \{1, ..., \ell\}, \\
+                                        & \ubarV{\objb}_{\ell+1} \le \objA_{\ell+1} \x  -  \violation_{\ell+1} \le \barV{\objb}_{\ell+1}.
+    \end{aligned}
+\end{equation}
+%
+Similarly, dedicated solvers like those proposed in \cite{Escande2014ijrr,
+Dimitrov2015preprint} should implement special logic to handle regularization
+tasks.
+
+
+We believe that Tikhonov regularization is not the best choice in general. For
+example, if $\objA_{\ell} = \M{I}$ it is more reasonable to bias $\x$ towards
+$\V{\objb}_{r,\ell} = \ubarV{\objb}_{\ell} + (\barV{\objb}_{\ell} -
+\ubarV{\objb}_{\ell}) / 2$ rather than $\V{0}$. Hence, we advocate for
+regularization using a general matrix $\objA_{r,\ell}$ and vector
+$\V{\objb}_{r,\ell}$ \cite{Sherikov2015humanoids}
+%
+\begin{equation}
+    \begin{bmatrix}
+        \ubarV{\objb}_{\ell} \\
+        \gamma_{r,\ell} \V{\objb}_{r,\ell} \\
+    \end{bmatrix}
+    \le
+    \begin{bmatrix}
+        \objA_{\ell} \\
+        \gamma_{r,\ell} \objA_{r,\ell} \\
+    \end{bmatrix}
+    \x
+    \le
+    \begin{bmatrix}
+        \barV{\objb}_{\ell} \\
+        \gamma_{r,\ell} \V{\objb}_{r,\ell} \\
+    \end{bmatrix}
+    ,
+\end{equation}
+%
+which corresponds to the least-squares problem
+%
+\begin{equation}
+    \begin{aligned}
+        \MINIMIZE{\x, \violation_{\ell}} & \NORME{\violation_{\ell}}^2 + \gamma_{r,\ell}^2 \NORME{\objA_{r,\ell} \x - \V{\objb}_{r,\ell}}^2\\
+        \SUBJECTTO                  & \ubarV{\objb}_j \le \objA_j \x  -  \violation_j^{\star} \le \barV{\objb}_j,  && j \in \{1, ..., \ell-1\}, \\
+                                    & \ubarV{\objb}_{\ell} \le \objA_{\ell} \x  -  \violation_{\ell} \le \barV{\objb}_{\ell}.
+    \end{aligned}
+\end{equation}
+%
+Regularization can be tuned by changing the damping factor $\gamma_{r,\ell}$.
+The choice of $\objA_{r,\ell}$ and $\V{\objb}_{r,\ell}$ may appear to be
+nontrivial, but in most practical applications these terms are already defined
+and imposed on the very last level of the hierarchy to resolve any remaining
+redundancy. Our practical experience also suggests, that regularization with
+the last objective of a hierarchy is much easier to tune than Tikhonov
+regularization.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Examples and applications}\label{sec.pllso_examples}
+
+A hierarchy of objectives is not a new concept, but it has experienced a
+significant growth of interest in the recent years due to its spreading in the
+control of humanoid robots \cite{Kanoun2009thesis, Saab2013tro,
+Sentis2007thesis}. We believe that the reason for this is not only the power of
+prioritization, but also the clearness and conciseness of representation of
+robot control problems in the form of a hierarchy \cite{Dimitrov2014jrs}. The
+second reason, however, led to what we believe to be a misuse of hierarchies
+and to a certain disappointment in them.
+
+
+We would like to stress that posing optimization problems as hierarchies is not
+always meaningful, but should be considered for the following purposes
+%
+\begin{itemize}
+    \item Relaxation of objectives and resolution of conflicts between them by
+        introducing strict priorities. Note that in the literature it is common
+        to prioritize objectives even if they are compatible
+        \cite[Chapter~5]{Sentis2007thesis}, \cite{Dietrich2015ijrr,
+        Saab2013tro}. Consequently, many proposed hierarchies can be
+        reformulated as \ac{QP}'s and solved with off-the-shelf software
+        without qualitative changes in the robot behavior.
+
+    \item Increase of the computational performance due to variable
+        eliminations. Prioritization of the objectives is equivalent to
+        variable eliminations, which are commonly performed in robot control as
+        preliminary steps \cite{Dimitrov2014jrs}, and, likewise, allows for
+        faster solution of optimization problems \cite{Dimitrov2015preprint}.
+        This point is explained in more detail using an example in
+        \cref{sec.variable_elimination}.
+\end{itemize}
+%
+In this section we brought together several examples to illustrate situations
+where hierarchies are useful. The ideas behind these examples are general and
+are not limited to humanoid robot control.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Variable elimination}\label{sec.variable_elimination}
+
+Variable elimination, which is ubiquitously performed in robotics, can be
+perceived as prioritization of constraints. We illustrate this with a simple
+hierarchy corresponding to an \ac{MPC} problem
+%
+\begin{hierarchy}[hr.mpc_simple]
+    \level  $\V{x}_{k+1} = \M{A}_k \V{x}_k + \M{B}_k \V{u}_k$\\
+            $\V{x}_{k+1} \in \SET{X}_{k+1}$\\
+            $\V{u}_k \in \SET{U}_k$\\
+            $\V{x}_N \in \SET{T}$
+
+    \level  $\M{\Gamma}_{\V{x}} \V{x}_{k+1} = \V{0}$\\
+            $\M{\Gamma}_{\V{u}} \V{u}_k = \V{0}$
+
+    \vars{$\x = (\V{x}_{k+1}, \V{u}_k)$ with $k \in \{0, ..., N-1\}$}
+\end{hierarchy}
+%
+where $\V{x}_N \in \SET{T}$ is a terminal or capturability constraint,
+$\M{\Gamma}_{\V{x}}$ and $\M{\Gamma}_{\V{u}}$ are some weighting matrices.
+
+
+In practice it is common to perform so called \tn{condensing} of the considered
+\ac{MPC} problem \cite{Bock1984ifac}, \cref{app.condensing}. The idea of
+condensing consists in
+%
+\begin{itemize}
+    \item expressing states $(\V{x}_1, ..., \V{x}_N)$ through the current state
+        $\V{x}_0$ and control inputs $(\V{u}_0, ..., \V{u}_{N-1})$ using the
+        equation of dynamics of the system and
+
+    \item elimination of $(\V{x}_1, ..., \V{x}_N)$ from the problem.
+\end{itemize}
+%
+This procedure can be interpreted as satisfying the dynamics first and the
+remaining objectives later and, thus, can be posed as the hierarchy
+%
+\begin{hierarchy}[hr.dynamics_elimination]
+    \level  $\V{x}_{k+1} = \M{A}_k \V{x}_k + \M{B}_k \V{u}_k$
+
+    \level  $\V{x}_{k+1} \in \SET{X}_{k+1}$\\
+            $\V{u}_k \in \SET{U}_k$\\
+            $\V{x}_N \in \SET{T}$
+
+    \level  $\M{\Gamma}_{\V{x}} \V{x}_{k+1} = \V{0}$\\
+            $\M{\Gamma}_{\V{u}} \V{u}_k = \V{0}$
+
+    \vars{$\x = (\V{x}_{k+1}, \V{u}_k)$ with $k \in \{0, ..., N-1\}$}
+\end{hierarchy}
+%
+The null space of the objective \cref{hr.dynamics_elimination.1}, where
+objectives \cref{hr.dynamics_elimination.2} and
+\cref{hr.dynamics_elimination.3} are satisfied, is of lower dimension than the
+space of all vectors $\x$ \cite{Kanoun2011tro, deLasa2010trangraph,
+Dimitrov2015preprint}. A \ac{PLLS} solver can exploit this fact to
+automatically eliminate variables and avoid unnecessary computations
+\cite{Dimitrov2015preprint}.
+
+
+Representation of variable eliminations with hierarchies is appealing, since it
+emphasizes the essence of the problem rather than implementation details.
+Therefore, it encourages development of general approaches to solving
+hierarchies instead of \tn{ad-hoc} methods for solving particular optimization
+and control problems. Note that generality does not imply lower performance,
+since the solvers can take advantage of the structure of the problem as it is
+done during manual elimination of variables (see
+\cref{sec.hierarchy_efficiency}).
+
+
+The above conclusion is not limited to condensing in \ac{MPC} and applies to
+many problems in robotics, for example, elimination of the external forces in
+whole body motion controllers \cite[Chapter~2]{Sentis2007thesis}
+\cite{Mansard2012icra}, or elimination of joint torques \cite{Herzog2015auro}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Relaxation of capturability and terminal constraints}
+
+Consider \cref{hr.mpc_simple} corresponding to a general \ac{MPC} problem. It
+is recognized that the terminal (or capturability) constraint in it may be the
+source of infeasibility \cite[Chapter~8]{Rossiter2003mpc}. If, for various
+reasons, neither the length of the preview horizon nor the terminal set
+$\SET{T}$ can be adjusted to avoid infeasibility, a reasonable option is
+relaxation. In this case we have to take into account two goals: ({\bf i})
+relaxation of the terminal constraint should not interfere with other high
+priority tasks, ({\bf ii}) low priority objectives should not interfere with
+satisfaction of the terminal constraint. We achieve both goals by adding a
+separate priority level for the terminal or capturability constraint
+\cite{Sherikov2014humanoids}
+%
+\begin{hierarchy}[hr.mpc_with_capturability]
+    \level  $\V{x}_{k+1} = \M{A}_k \V{x}_k + \M{B}_k \V{u}_k$\\
+            $\V{x}_{k+1} \in \SET{X}_{k+1}$\\
+            $\V{u}_k \in \SET{U}_k$
+
+    \level  $\V{x}_N \in \SET{T}$
+
+    \level  $\M{\Gamma}_{\V{x}} \V{x}_{k+1} = \V{0}$\\
+            $\M{\Gamma}_{\V{u}} \V{u}_k = \V{0}$
+
+    \vars{$\x = (\V{x}_{k+1}, \V{u}_k)$ with $k \in \{0, ..., N-1\}$}
+\end{hierarchy}
+%
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Time optimal Model Predictive Control}\label{sec.time_optimal_mpc}
+
+In some situations, hierarchies can be used for expressing backup control
+goals, for example, hierarchy
+%
+\begin{hierarchy}
+    \level $\ubarV{\objb} \le \x \le \barV{\objb}$
+    \levelLabel{$\dots$} $\dots$
+    \levelLabel{$\V{\ell}$:} $\displaystyle \x = \ubarV{\objb} + \frac{1}{2} \left( \barV{\objb} - \ubarV{\objb} \right)$
+\end{hierarchy}
+%
+can be interpreted as follows: if satisfaction of the equality task on $\x$ on
+level $\ell$ is impossible, fall back to bounding of $\x$. We combined this
+idea with the idea of hierarchical relaxation of the terminal constraint to
+obtain a time optimal \ac{MPC} scheme hinted in
+\cite[Chapter~8]{Kerrigan2000thesis} and implemented in \cite{alHomsi2016icra}.
+The goal of a time optimal controller is to reach the desired state
+$\V{x}^{\DES}$ in minimal time. Hence, we can first try to achieve the goal
+within the first sampling interval of the preview horizon, if not impossible --
+within $2$ intervals, and so on until the end of preview horizon is reached. We
+can formalize this process with a single hierarchy, where reaching
+$\V{x}^{\DES}$ in $k+1$ sampling intervals in the preview horizon is infinitely
+more important than reaching it in $k$ intervals:
+%
+\thesisHierarchyStyle{\setlength{\labelwidth}{1.5cm}\setlength{\leftmargin}{1.5cm}}
+\begin{hierarchy}
+    \level  $\V{x}_{k+1} = \M{A}_k \V{x}_k + \M{B}_k \V{u}_k$\\
+            $\V{x}_{k+1} \in \SET{X}_{k+1}$\\
+            $\V{u}_k \in \SET{U}_k$
+
+    \level  $\V{x}_{N} = \V{x}^{\DES}$
+
+    \levelLabel{$\dots$} $\dots$
+
+    \levelLabel{$\V{N+1}$:}  $\V{x}_{1} = \V{x}^{\DES}$
+
+    \levelLabel{$\V{N+2}$:}  $\M{\Gamma}_{\V{x}} \V{x}_{k+1} = \V{0}$\\
+            $\M{\Gamma}_{\V{u}} \V{u}_k = \V{0}$
+
+    \vars{$\x = (\V{x}_{k+1}, \V{u}_k)$ with $k \in \{0, ..., N-1\}$}
+\end{hierarchy}
+\thesisHierarchyStyle{}%
+%
+More information on implementation of this time optimal controller and results
+of its evaluation can be found in \cite{alHomsi2016icra}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Mixed Model Predictive Control}\label{sec.mmpc_hierarchy}
+
+A sequence of actions can often be interpreted as a strict hierarchy between
+them. We use this insight to present our \ac{MMPC} approach from a different
+perspective.
+
+
+The traditional approach to control of humanoid robots consists of two
+sequential stages (see \cref{sec.mmpc})
+%
+\begin{enumerate}
+    \item Anticipation, which can be performed using \ac{MPC} in the form of
+        \cref{hr.mpc_with_capturability}. Assuming that the anticipation is
+        performed at the same rate as whole body motion control, we extract the
+        initial control $\V{u}_0^\star$ from the solution of the \ac{MPC} to
+        feed it to the whole body motion controller.
+
+    \item Execution of the desired values $\V{u}_0^\star$ obtained from the
+        solution of \cref{hr.mpc_with_capturability} by a whole body motion
+        controller. The controller is also based on a hierarchy, which
+        incorporates the whole body \nameref{model.WB} model presented in
+        \cref{sec.contact_constraints}:
+        %
+        \thesisHierarchyStyle{\setlength{\itemsep}{5pt}}
+        \begin{hierarchy}[hr.wbc_controller]
+            \level Dynamics of the robot
+                    \begin{itemize}
+                        \item $\displaystyle \M{H} \ddq + \V{h} = \Itorques\torques + m\T{\Jcom} \V{g} + \sum_{i=1}^M \T{\M{J}_i}
+                            \begin{bmatrix}
+                                \M{V}_i \V{\lambda}_i\\
+                                \moment_i
+                            \end{bmatrix}$
+                    \end{itemize}
+                   Fixed contact positions
+                    \begin{itemize}
+                        \item $\displaystyle \M{J}_i \ddq + \dotM{J}_i \dq = \V{0}$
+                    \end{itemize}
+                   Mechanical joint constraints
+                    \begin{itemize}
+                        \item $\displaystyle \ubar{\torques}  \le  \torques  \le  \bar{\torques}$
+                        \item $\displaystyle \ubar{\ddq}^{\prime}  \le  \ddqn  \le  \bar{\ddq}^{\prime}$
+                    \end{itemize}
+                   Constraints on the contact wrenches
+                    \begin{itemize}
+                        \item $\displaystyle
+                            \objA_{\moment,i}
+                            \begin{bmatrix}
+                                \V{\lambda}_i\\
+                                \moment_i
+                            \end{bmatrix}
+                            \ge
+                            \ubarV{\objb}_{\moment,i}
+                            $
+                        \item $\displaystyle \V{\lambda}_i \ge \V{0}$
+                    \end{itemize}
+                   A task with some $\objA_t$ and $\V{\objb}_t$ for tracking of the desired $\V{u}_0^\star$
+                    \begin{itemize}
+                        \item $\objA_t \begin{bmatrix} \x\\ \V{u}_0^\star \end{bmatrix} = \V{\objb}_t$
+                    \end{itemize}
+
+            \level Arbitrary whole body tasks (see \cref{sec.wbm_control}).
+
+            \vars{$\x = (\ddq, \torques, \V{\lambda}_i, \moment_{i})$ with $i \in \{1, ..., M\}$}
+        \end{hierarchy}
+        \thesisHierarchyStyle{}%
+        %
+\end{enumerate}
+
+
+After concatenation of \cref{hr.mpc_with_capturability,hr.wbc_controller} and
+shuffling of the tasks in the resulting hierarchy we obtain an \ac{MMPC}
+controller \cite{Sherikov2014humanoids, Sherikov2015humanoids}
+%
+\thesisHierarchyStyle{\setlength{\itemsep}{5pt}}
+\begin{hierarchy}[hr.mmpc_general]
+    \level Tasks of the whole body motion controller
+            \begin{itemize}
+                \item $\displaystyle \M{H} \ddq + \V{h} = \Itorques\torques + m\T{\Jcom} \V{g} + \sum_{i=1}^M \T{\M{J}_i}
+                    \begin{bmatrix}
+                        \M{V}_i \V{\lambda}_i\\
+                        \moment_i
+                    \end{bmatrix}$
+                \item $\displaystyle \M{J}_i \ddq + \dotM{J}_i \dq = \V{0}$
+                \item $\displaystyle \ubar{\torques}  \le  \torques  \le  \bar{\torques}$
+                \item $\displaystyle \ubar{\ddq}^{\prime}  \le  \ddqn  \le  \bar{\ddq}^{\prime}$
+                \item $\displaystyle
+                    \objA_{\moment,i}
+                    \begin{bmatrix}
+                        \V{\lambda}_i\\
+                        \moment_i
+                    \end{bmatrix}
+                    \ge
+                    \ubarV{\objb}_{\moment,i}
+                    $
+                \item $\displaystyle \V{\lambda}_i \ge \V{0}$
+            \end{itemize}
+           Tasks of the \ac{MPC} controller
+            \begin{itemize}
+                \item $\V{x}_{k+1} = \M{A}_k \V{x}_k + \M{B}_k \V{u}_k$
+                \item $\V{x}_{k+1} \in \SET{X}_{k+1}$
+                \item $\V{u}_k \in \SET{U}_k$
+            \end{itemize}
+           The coupling task
+            \begin{itemize}
+                \item $\objA_t \x = \V{\objb}_t$
+            \end{itemize}
+
+    \level The capturability constraint
+            \begin{itemize}
+                \item $\V{x}_N \in \SET{T}$
+            \end{itemize}
+
+    \level Arbitrary whole body tasks\\
+           Tasks of the \ac{MPC} controller
+            \begin{itemize}
+                \item $\M{\Gamma}_{\V{x}} \V{x}_{k+1} = \V{0}$
+                \item $\M{\Gamma}_{\V{u}} \V{u}_k = \V{0}$
+            \end{itemize}
+
+        \vars{$\x = (\ddq, \torques, \V{\lambda}_i, \moment_{i}, \V{x}_{k+1}, \V{u}_k)$\\
+        \makebox[3.3cm]{} with $i \in \{1, ..., M\}$ and $k \in \{0, ..., N-1\}$}
+\end{hierarchy}
+\thesisHierarchyStyle{}%
+%
+More detailed examples of this hierarchy are given in \cref{ch.simulations}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Minimization of an optional contact force}
+
+We extended \cref{hr.mmpc_general} in \cite{Sherikov2015humanoids} in such a
+way, that the controller applies non-zero contact force at a certain contact
+only when it is necessary to maintain balance or execute a whole body task.
+This is achieved with a hierarchy, which can roughly be stated as
+%
+\begin{hierarchy}
+    \level maintain balance
+    \level execute whole body task
+    \level minimize optional contact force
+\end{hierarchy}
+%
+and is considered in detail in \cref{sec.optional_force}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Solving hierarchies efficiently}\label{sec.hierarchy_efficiency}
+
+Computational efficiency is one of the most important factors in real time
+controllers. Hence, we aim at efficient resolution of hierarchies used in our
+controllers. In order to achieve this, we employ a number of techniques, which
+are reviewed in this section and are supported by \sn{LexLS} to various
+degrees. The techniques are of general nature and are shared with conventional
+active set \ac{QP} solvers, whose performance is studied extensively in the
+literature \cite{Herceg2015ocam, Wang2010tcst, Ferreau2008ijrnc}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Exploitation of the problem structure}\label{sec.problem_structure}
+
+One of the ways to improve performance of the solver is to shape the
+optimization problem in a beneficial manner and to inform the solver about the
+structure of the problem.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Two-sided inequalities}
+
+We formulate all objectives in such a way that they have both upper and lower
+bounds:
+%
+\begin{equation}\label{eq.basic_ls_ineq2}
+    \ubarV{\objb}
+    \le
+    \objA \x
+    \le
+    \barV{\objb}
+    .
+\end{equation}
+%
+The reason for this is that bounds $\ubarV{\objb} < \barV{\objb}$ cannot be
+activated simultaneously, and an active set solver can exploit this fact to
+reduce computational load. If one of the bounds is undefined it can be replaced
+by some ``very large'' number. When $\ubarV{\objb} = \barV{\objb} = \V{\objb}$
+the constraints are treated as equalities, which are always active.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Simple bounds}\label{sec.simple_bounds}
+
+In some situations it is possible to express general inequalities
+\cref{eq.basic_ls_ineq2} as \tn{simple bounds} or \tn{box constraints} on
+the decision variables:
+%
+\begin{equation}\label{eq.simple_bounds}
+    \ubarV{\objb}
+    \le
+    \x
+    \le
+    \barV{\objb}.
+\end{equation}
+%
+Handling of such constraints can be implemented in a very efficient way
+\cite{Gill1984tms, Ferreau2008ijrnc, Dimitrov2015preprint}. For this reason, we
+reformulate \ac{MPC} problems to convert general inequalities to simple bounds,
+\EG, \cite{Dimitrov2011icra}, \cref{sec.mpc_simple_bounds}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Sparsity}\label{sec.sparsity}
+
+We call a task \tn{sparse} if the corresponding matrix $\objA$ contains a large
+number of zeros. A task with simple bounds \cref{eq.simple_bounds} is a typical
+example of a sparse task. Other examples are the tasks on the first level of
+\cref{hr.mpc_simple} corresponding to \ac{MPC} constraints. This type of
+sparsity is sometimes exploited in \ac{QP} solvers designed for \ac{MPC}
+problems \cite{Wang2010tcst, Dimitrov2011iros}. \sn{LexLS} currently can take
+advantage of the sparsity only in the case of simple bounds on the first level
+of a hierarchy.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\subsection{Early termination}\label{sec.early_termination}
+
+Control problems are typically resolved with a constant rate, which means that
+there is an upper limit on the time available for computations. Hence, the
+solvers should provide a mechanism for early termination in order to fit within
+the limits \cite{Ferreau2008ijrnc, Wang2010tcst}. Termination can be triggered
+by a timer or the number of iterations of the solver. One iteration of an
+active set solver typically corresponds to activation or deactivation of a
+single constraint.
+
+
+Early termination is potentially dangerous since the solution returned by the
+solver is suboptimal. In the \ac{PLLS} framework it implies that violations of
+objectives can be unacceptably large, \IE, high priority constraints may not be
+satisfied even if they are feasible. This is not an issue, if a solver is
+provided with an initial guess of the solution, which is feasible with respect
+to the primary tasks, and the solver does not increase violations of the
+objectives while searching for the solution.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Warm start}
+
+Since the hierarchies for control of robots are resolved at high frequency, the
+solutions usually do not change much from one control iteration to another
+\cite{Kuindersma2014icra, Escande2014ijrr, Sherikov2014humanoids}. This allows
+to use the solution $\x^\star$ and the active set obtained at $i$-th iteration
+to warm start the solver on $i+1$ iteration.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Guessing the solution}
+
+Ideally, a solution guess should be feasible with respect to the high priority
+objectives, in this case it is safe to terminate the solver before the solution
+is found. However, determination of such a guess for hierarchies employed in
+this thesis is not trivial, and we simply reuse the solution $\x^\star$ from
+the previous control iteration. When the dimension of $\x$ changes, for
+example, due to a switch from a single to a double support, it is necessary to
+drop parts of the previous solution or provide a guess for the missing parts of
+$\x$. Our main heuristic for assigning the missing parts is to avoid activation
+of the corresponding inequality constraints.
+
+
+An alternative approach to generate a guess is to solve an auxiliary hierarchy,
+which has roughly the following structure
+%
+\begin{hierarchy}
+    \level Important equality tasks.
+
+    \level Important inequality tasks $\ubarV{\objb} \le \objA \x \le
+        \barV{\objb}$ converted to equalities\\
+        $\displaystyle \objA \x = \ubarV{\objb} + \frac{1}{2} \left(\barV{\objb} - \ubarV{\objb} \right)$\\
+        and weighted with respect to each other.
+\end{hierarchy}
+%
+and guarantees satisfaction of primary equality constraints if the solver is
+terminated prematurely. Solution of this hierarchy may result in a better
+guess, but it is time consuming and the weights have to be tuned carefully
+depending on the setting.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Guessing the active set}
+
+In addition to the solution guess we provide the solver with a guess of the
+active set, \IE, the set of active inequality constraints at the solution
+\cite{Ferreau2008ijrnc, Escande2014ijrr, Kuindersma2014icra}. Since the number
+of constraints also changes from one control iteration to another, we employ a
+number of task specific heuristics for modifying the active set when such
+changes occur.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{Preprocessing}\label{sec.plls_preprocessing}
+
+Since \sn{LexLS} has rather limited capabilities for exploiting the problem
+structure (see \cref{sec.problem_structure}), we perform several preprocessing
+steps to improve performance.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Variable elimination}
+
+During the preprocessing, we eliminate some of the variables in the hierarchies
+to reduce computational load. In particular, we eliminate the whole body joint
+torques $\torques$ as described in \cref{sec.momenta_based_nonlinear} and
+perform condensing of \ac{MPC} problems \cite{Bock1984ifac},
+\cref{app.condensing}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Removing excessive simple bounds}
+
+Simple bounds on the joint accelerations $\ddqn$ are overdetermined as
+explained in \cref{app.jointconstraints}. Due to simplicity of these
+constraints, it is possible to reduce their number using a trivial procedure.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsubsection{Removing excessive equality constraints}
+
+In some cases the matrix $\objA$ in an equality task $\objA \x = \V{\objb}$
+includes linearly dependent constraints. If this task does not change on each
+control iteration, it is beneficial to remove excessive constraints using a
+\tn{QR-decomposition} of $\objA$ with column pivoting
+\cite[Chapter~5]{Golub1996matrix}.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Conclusion}
+
+We introduced the \acf{PLLS} framework and illustrated it with several
+optimization problems proposed in our works \cite{Sherikov2014humanoids,
+Sherikov2014humanoids, alHomsi2016icra}. In particular, we presented an
+interpretation of \acf{MMPC} problem as a result of merging and
+reprioritization of motion anticipation and whole body motion controllers. In
+addition to that we outlined several techniques, which we employ to reduce
+computational load when solving \ac{PLLS} problems.

@@ -1,0 +1,126 @@
+%-------------------------------------------------------------------------------
+\chapter{Impact law}
+\label{app.collision}
+\acresetall
+%-------------------------------------------------------------------------------
+
+Definition of impact law for the complementarity system
+\cref{eq.complementarity_system} is an intricate problem \cite{Glocker2006nms}.
+In the present work we do not aim for accurate modeling, and, therefore, adopt
+two approximate versions of the law to simulate disturbances due to foot
+touchdowns and pushes of the robot by given impulsive forces. Any disturbance
+results in a discontinuous change of velocities of the system at the collision
+instant. We denote the right and left limits of velocities with respect to this
+instant with superscripts $(\cdot)^+$ and $(\cdot)^-$.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Foot touchdown}
+
+When modeling disturbance due to a foot touchdown we assume that
+%
+\begin{description}
+    \item[\ass{ass.nodetach}] the contacts never detach as a result of an impact;
+
+    \item[\ass{ass.anytangentialforce}] the tangential impulsive contact forces
+        are not limited due to friction;
+
+    \item[\ass{ass.nomechanicalconstraints}] mechanical constraints of the
+        system can be safely ignored, so that modeling of impacts in the joints
+        can be avoided.
+\end{description}
+%
+Under these assumptions the impact law is defined as
+%
+\begin{subequations}\label{eq.impact_law1}
+\begin{empheq}[left=\empheqlbrace]{align}
+    & \M{H}(\dq^+ - \dq^-) = \T{\Jcontact} \impulse
+      ,
+      \label{eq.impact_law1.dynamics}
+      \\
+    & \Jcontacti \dq^+ = \V{0}, & i \in \{1, ..., M\}
+      ,
+      \\
+    & \impulseC_i^n \ge 0
+      ,
+      \label{eq.impact_law1.unilaterality}
+\end{empheq}
+\end{subequations}
+%
+where
+%
+\begin{subequations}
+    \begin{align}
+        & (\dcontact_1^\pm, \dots, \dcontact_M^\pm) = \Jcontact \dq^\pm
+          ,
+          \\
+        & (\impulse_1, \dots, \impulse_M) = \impulse
+          ,
+          \\
+        &   \begin{bmatrix}
+                \dcontact^{t,\pm}_i\\
+                \dcontactC^{n,\pm}_i
+            \end{bmatrix}
+            =
+            \M[][i]{R}
+            \dcontact_i^\pm,
+            \enspace
+            \begin{bmatrix}
+                \impulse^{t}_i \\
+                \impulseC^{n}_i
+            \end{bmatrix}
+            =
+            \M[][i]{R}
+            \impulse_i,
+    \end{align}
+\end{subequations}
+%
+$\impulse$ denotes impulsive contact forces, and other terms are defined in the
+same way as in \cref{sec.complementarity_system}.
+
+
+We obtain post-impact generalized velocities $\dq^+$ by solving an optimization
+problem based on the impact law \cref{eq.impact_law1}
+%
+\begin{hierarchy}[hr.touchdown]
+    \level $\impulseC_i^n \ge 0$\\
+           $\Jcontacti \dq^+ = \V{0}$\\
+
+    \level $\M{H}(\dq^+ - \dq^-) = \T{\Jcontact} \impulse$
+
+    \vars{$\dq^{+}$, $\impulse$}
+\end{hierarchy}
+%
+Exact satisfaction of all objectives is not always possible. Hence, in order to
+prevent drift of the feet during simulations, we have chosen to assign higher
+priority to the objective, which prevents motion of the feet.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Push}
+
+We represent pushes of the robot by impulsive forces $\impulse_d$ applied at
+certain points on the robot body. For this reason, the impact law
+\cref{eq.impact_law1} is changed to:
+%
+\begin{subequations}\label{eq.impact_law2}
+\begin{empheq}[left=\empheqlbrace]{align}
+    & \M{H}(\dq^+ - \dq^-) = \T{\Jcontact} \impulse + \T{\M{J}_d} \impulse_d
+      ,
+      \\
+    & \Jcontacti \dq^+ = \V{0}, & i \in \{1, ..., M\}
+      ,
+      \\
+    & \impulseC_i^n \ge 0
+      .
+\end{empheq}
+\end{subequations}
+%
+The generalized velocities $\dq^+$ after a push are found using appropriately
+modified \cref{hr.touchdown}.

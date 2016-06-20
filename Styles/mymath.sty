@@ -1,0 +1,556 @@
+\ProvidesPackage{mymath}[]
+
+\usepackage{bm}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+\usepackage{ifthen}
+%\usepackage{fouridx}
+\usepackage{tensor}
+\usepackage{xcolor}
+%\usepackage[subnum]{cases}
+\usepackage{empheq}
+
+\usepackage{tcolorbox}
+\tcbuselibrary{breakable,skins}
+\usepackage{varwidth}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand{\ubar}[1]{\underline{#1}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Non-math abbreviations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\newcommand{\IE}{\emph{i.e.}}
+\newcommand{\EG}{\emph{e.g.}}
+\newcommand{\ETC}{\emph{etc}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Matrices & vectors
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% set
+%\newcommand{\SET}[1]{\mathcal{#1}}
+\newcommand{\SET}[1]{\mathbb{#1}}
+% frame
+\newcommand{\FRAME}[1]{\mathsf{#1}}
+% function
+\newcommand{\FUNC}[1]{\mbox{#1}}
+
+% new vector/matrix notation
+\newcommand{\VEC}[1]{\bm{#1}}
+\newcommand{\MAT}[1]{\bm{#1}}
+
+% vector
+\newcommand{\V}[2][{}]{
+    \ifthenelse{\equal{#1}{}}
+    % then
+        {\VEC{#2}}
+    % else
+        {\tensor[^{\FRAME{#1}}]{\VEC{#2}}{}}
+        %{{^\FRAME{#1}}\VEC{#2}}
+}
+\newcommand{\defineV}[1]{
+    \expandafter\newcommand\csname#1V\endcsname[2][{}]{
+        \ifthenelse{\equal{##1}{}}
+        % then
+            {\csname#1\endcsname{\VEC{##2}}}
+        % else
+            {\tensor[^{\,\FRAME{##1}}]{\mbox{$\smash{\csname#1\endcsname{\VEC{##2}}}\vphantom{##2}$}}{}}
+            %{\tensor[^{\,\FRAME{##1}}]{\csname#1\endcsname{\VEC{##2}}}{}}
+            %{{^\FRAME{##1}}\csname#1\endcsname{\VEC{##2}}}
+    }
+}
+\defineV{hat}
+\defineV{tilde}
+\defineV{bar}
+\defineV{ubar}
+\defineV{dot}
+\defineV{ddot}
+\defineV{dddot}
+\defineV{ddddot}
+
+
+% component of a vector
+\newcommand{\C}[2][{}]{
+    \ifthenelse{\equal{#1}{}}
+    % then
+        {#2}
+    % else
+        {\tensor[^{\FRAME{#1}}]{#2}{}}
+}
+\newcommand{\defineC}[1]{
+    \expandafter\newcommand\csname#1C\endcsname[2][{}]{
+        \ifthenelse{\equal{##1}{}}
+        % then
+            {\csname#1\endcsname{##2}}
+        % else
+            {\tensor[^{\,\FRAME{##1}}]{\mbox{$\smash{\csname#1\endcsname{##2}}\vphantom{##2}$}}{}}
+            %{\tensor[^{\,\FRAME{##1}}]{\csname#1\endcsname{##2}}{}}
+    }
+}
+\defineC{hat}
+\defineC{tilde}
+\defineC{bar}
+\defineC{ubar}
+\defineC{dot}
+\defineC{ddot}
+\defineC{dddot}
+\defineC{ddddot}
+
+
+% matrix
+\newcommand{\M}[1][{}]{\def\ArgI{#1} \Mrelay}
+\newcommand\Mrelay[2][{}]{
+    \ifthenelse{\equal{#1}{}}
+        {
+            \ifthenelse{\equal{\ArgI}{}}
+            % then
+                {\MAT{#2}}
+            % else
+                {\tensor{\MAT{#2}}{}_{\FRAME{\ArgI}}}
+                %{\MAT{#2}{_\FRAME{\ArgI}}}
+        }
+        {
+            \ifthenelse{\equal{\ArgI}{}}
+            % then
+                {\tensor[^{\hspace{\scriptspace}\FRAME{#1}\kern-\scriptspace}]{\MAT{#2}}{}}
+                %{{^\FRAME{#1}}\MAT{#2}}
+            % else
+                {\tensor[^{\hspace{\scriptspace}\FRAME{#1}\kern-\scriptspace}]{\MAT{#2}}{}_{\FRAME{\ArgI}}}
+                %{{^\FRAME{#1}}\MAT{#2}_\FRAME{\ArgI}}
+                %{\fourIdx{\FRAME{#1}}{}{}{\FRAME{\ArgI}}{\MAT{#2}}}
+        }
+}
+
+\newcommand{\defineM}[1]{
+    \expandafter\newcommand\csname#1Mrelay\endcsname[2][{}]{
+        \ifthenelse{\equal{##1}{}}
+            {
+                \ifthenelse{\equal{\ArgI}{}}
+                % then
+                    {\csname#1\endcsname{\MAT{##2}}}
+                % else
+                    {\tensor{\csname#1\endcsname{\MAT{##2}}}{}_{\FRAME{\ArgI}}}
+                    %{\csname#1\endcsname{\MAT{##2}}{_\FRAME{\ArgI}}}
+            }
+            {
+                \ifthenelse{\equal{\ArgI}{}}
+                % then
+                    {\tensor[^{\hspace{\scriptspace}\FRAME{##1}}]{\csname#1\endcsname{\MAT{##2}}}{}}
+                    %{{^\FRAME{#1}}\MAT{#2}}
+                % else
+                    {\tensor[^{\hspace{\scriptspace}\FRAME{##1}}]{\csname#1\endcsname{\MAT{##2}}}{}_{\FRAME{\ArgI}}}
+                    %{{^\FRAME{#1}}\MAT{#2}_\FRAME{\ArgI}}
+                    %{\fourIdx{\FRAME{#1}}{}{}{\FRAME{\ArgI}}{\MAT{#2}}}
+            }
+    }
+    \expandafter\newcommand\csname#1M\endcsname[1][{}]{\def\ArgI{##1} \csname#1Mrelay\endcsname}
+}
+\defineM{hat}
+\defineM{tilde}
+\defineM{bar}
+\defineM{ubar}
+\defineM{dot}
+\defineM{ddot}
+\defineM{dddot}
+\defineM{ddddot}
+
+\newcommand{\T}[1]{#1^{\! \top}}
+\newcommand{\TI}[1]{#1^{-\!\top}}
+%\newcommand{\T}[1]{\tensor*{#1}{^\top}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Math abbreviations
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% text in math mode
+\newcommand{\MT}[1]{\mathit{#1}}
+
+% set of the real numbers
+\newcommand{\RR}{\mathbb{R}}
+\newcommand{\ZZ}{\mathbb{Z}}
+\newcommand{\NN}{\mathbb{N}}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Math commands
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% add \argmin command
+\newcommand{\ARGMIN}[1]{\underset{#1}{\operatorname{arg}\,\operatorname{min}}\;}
+
+% optimization
+\newcommand{\MINIMIZE}[1]{\underset{#1}{\operatorname{minimize}}\quad}
+\newcommand{\SUBJECTTO}{{\operatorname{subject\;to}}\quad}
+
+% norm
+\newcommand{\NORM}[1]{\left\lVert#1\right\rVert}
+\newcommand{\NORME}[1]{\left\lVert#1\right\rVert_2}
+
+% diagonal matrix
+\newcommand{\diag}[2]{\underset{#1}{\operatorname{diag}}\left(#2\right)}
+
+% cross product matrix
+\newcommand{\CROSS}[1][{}]{
+    \ifthenelse{\equal{#1}{}}
+        {\times}
+        {#1^{\! {\times}}}
+}
+%\newcommand{\CROSS}[1]{\overset{{\times}}{#1}}
+
+% frac, which uses smaller font to avoid overlapping of text in adjacent rows of bmatrix
+\newcommand{\FRAC}[2]{\genfrac{}{}{}{2}{#1}{#2}}
+
+% convex hull
+\newcommand{\convhull}[1]{\operatorname{convhull}\left(#1\right)}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Fixes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% fix font in \dddot and \ddddot
+% might be necessary, if the fonts are changed
+\makeatletter
+%\renewcommand{\dot}[1]{%
+%{\mathop{\kern\z@#1}\limits^{\vbox to-1.4\ex@{\kern-\tw@\ex@
+%\hbox{$...$}\vss}}}}
+%\renewcommand{\ddot}[1]{%
+%{\mathop{\kern\z@#1}\limits^{\vbox to-1.4\ex@{\kern-\tw@\ex@
+%\hbox{$..$}\vss}}}}
+\renewcommand{\dddot}[1]{%
+{\mathop{\kern\z@#1}\limits^{\vbox to-1.4\ex@{\kern-\tw@\ex@
+\hbox{$...$}\vss}}}}
+\renewcommand{\ddddot}[1]{%
+{\mathop{\kern\z@#1}\limits^{\vbox to-1.4\ex@{\kern-\tw@\ex@
+\hbox{$....$}\vss}}}}
+\makeatother
+
+% remove space around brackets
+\let\originalleft\left
+\let\originalright\right
+\def\left#1{\mathopen{}\originalleft#1}
+\def\right#1{\originalright#1\mathclose{}}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Colors
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+\definecolor{gray}{rgb}{0.9,0.9,0.9}\newcommand{\gray}[1]{{\color{gray} #1}}
+\definecolor{darkgray}{rgb}{0.6,0.6,0.6}\newcommand{\darkgray}[1]{{\color{darkgray} #1}}
+\definecolor{white}{rgb}{1.0,1.0,1.0}\newcommand{\white}[1]{{\color{white} #1}}
+\definecolor{red}{rgb}{1.0,0.0,0.0}\newcommand{\red}[1]{{\color{red} #1}}
+\definecolor{blue}{rgb}{0.0,0.0,1.0}\newcommand{\blue}[1]{{\color{blue} #1}}
+
+
+\makeatletter
+\@ifclassloaded{book}
+{
+    \newcounter{Assumption}[chapter]
+    \renewcommand{\theAssumption}{\thechapter.\arabic{Assumption}}
+    \newcommand{\ass}[1]{\refstepcounter{Assumption}{\bf{AS-\theAssumption}\label{#1}}}
+}
+\makeatother
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Hierarchies
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
+% e.g. \setlength{\labelwidth}{1.5cm}\setlength{\leftmargin}{1.5cm}
+\newcommand{\hierarchyExtraSpacing}{}%
+
+\newcommand\basicHierarchyStyle[1]
+{
+    \renewtcolorbox{hierarchytcb}{
+        skin=enhanced,
+        lines before break=0,
+        %breakable,
+        after={},
+        %before={},
+        colframe=gray,
+        %colframe=black,
+        colback=gray,
+        coltitle=black,
+        colbacktitle=gray,
+        width=\linewidth,
+        %toprule=0.01cm,
+        bottomrule=0cm,
+        leftrule=0cm,
+        rightrule=0cm,
+        titlerule=0cm,
+        %titlerule=0.01cm,
+        arc=0.1cm,
+        %outer arc=0cm,
+        boxsep=0cm,
+        left=0cm,
+        right=0.1cm,
+        toptitle=0.06cm,
+        bottom=0.06cm,
+        top=0.06cm,
+        %bottomtitle=0.01cm,
+        %lefttitle=\parindent,
+        fonttitle=\footnotesize,
+        #1
+    }%
+}%
+
+
+\makeatletter
+\@ifclassloaded{book}
+{
+    \newcounter{Hierarchy}[chapter]
+    \newcounter{HierarchyLevel}[Hierarchy]
+    \newtcolorbox{hierarchytcb}{}
+
+
+    \newcommand\changeHierarchyStyle[2]
+    {
+        \basicHierarchyStyle{%
+            title={\centering \underline{Hierarchy (\theHierarchy)}},
+            #1
+        }%
+        \renewcommand{\hierarchyExtraSpacing}{#2}%
+    }%
+    \changeHierarchyStyle{}{}
+
+    \renewcommand{\theHierarchy}{\thechapter.\arabic{Hierarchy}}
+    %\renewcommand{\theHierarchyLevel}{\theHierarchy.\arabic{HierarchyLevel}}
+    %\newlength\hierarchyindent
+    \newenvironment{hierarchy}[1][hr.\theHierarchy]
+    {
+        \ignorespaces
+        \gdef\HierarchyDecisionVars{}
+        \refstepcounter{Hierarchy}
+        \def\HierarchyLabel{#1}
+        \label{\HierarchyLabel}
+        \newcommand{\level}[1][\theHierarchyLevel]
+        {
+            \refstepcounter{HierarchyLevel}
+            \label{\HierarchyLabel.##1}
+            \item
+        }
+        \newcommand{\levelLabel}[2][\theHierarchyLevel]
+        {
+            \refstepcounter{HierarchyLevel}
+            \label{\HierarchyLabel.##1}
+            \item[{\bf ##2}]
+        }
+        \newcommand{\vars}[1]
+        {
+            \gdef\HierarchyDecisionVars
+            {
+                \tcblower
+                \setlength{\parindent}{5pt}\par Decision variables: ##1
+                %\setlength{\parindent}{5pt}\par Decision variables:
+                %\setlength{\parindent}{15pt}\par ##1
+            }
+        }
+    %    \setlength\hierarchyindent\labelindent
+        %\leftmargin
+        \begin{hierarchytcb}
+        \begin{list}{\bf{\arabic{HierarchyLevel}:}}{
+            \setlength{\itemsep}{1pt}
+            \setlength{\parskip}{0pt}
+            \setlength{\parsep}{0pt}
+            \setlength{\listparindent}{0cm}
+            \hierarchyExtraSpacing
+        }
+    }
+    {
+        \end{list}
+        \HierarchyDecisionVars
+        \end{hierarchytcb}
+        \ignorespacesafterend
+        \noindent%
+    }
+}
+{
+    \newcounter{Hierarchy}
+    \newcounter{HierarchyLevel}[Hierarchy]
+    \newtcolorbox{hierarchytcb}{}
+
+    \newcommand\changeHierarchyStyle[2]
+    {
+        \basicHierarchyStyle{#1}%
+        \renewcommand{\hierarchyExtraSpacing}{#2}%
+    }%
+    \changeHierarchyStyle{}{}
+
+    \renewcommand{\theHierarchy}{\arabic{Hierarchy}}
+    %\renewcommand{\theHierarchyLevel}{\theHierarchy.\arabic{HierarchyLevel}}
+    %\newlength\hierarchyindent
+    \newenvironment{hierarchy}[1][hr.\theHierarchy]
+    {
+        \ignorespaces
+        \gdef\HierarchyDecisionVars{}
+        \refstepcounter{Hierarchy}
+        \def\HierarchyLabel{#1}
+        \label{\HierarchyLabel}
+        \newcommand{\level}[1][\theHierarchyLevel]
+        {
+            \refstepcounter{HierarchyLevel}
+            \label{\HierarchyLabel.##1}
+            \item
+        }
+        \newcommand{\levelLabel}[2][\theHierarchyLevel]
+        {
+            \refstepcounter{HierarchyLevel}
+            \label{\HierarchyLabel.##1}
+            \item[{\bf ##2}]
+        }
+        \newcommand{\vars}[1]
+        {
+            \gdef\HierarchyDecisionVars
+            {
+                \tcblower
+                \setlength{\parindent}{5pt}\par Decision variables: ##1
+                %\setlength{\parindent}{5pt}\par Decision variables:
+                %\setlength{\parindent}{15pt}\par ##1
+            }
+        }
+    %    \setlength\hierarchyindent\labelindent
+        %\leftmargin
+        \begin{hierarchytcb}
+        \begin{list}{\bf{\arabic{HierarchyLevel}:}}{
+            \setlength{\itemsep}{1pt}
+            \setlength{\parskip}{0pt}
+            \setlength{\parsep}{0pt}
+            \setlength{\listparindent}{0cm}
+            \hierarchyExtraSpacing
+        }
+    }
+    {
+        \end{list}
+        \HierarchyDecisionVars
+        \end{hierarchytcb}
+        \ignorespacesafterend
+    }
+}%
+\makeatother
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Models
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\newcommand\changeModelStyle[1]
+{
+    \renewtcolorbox{modeltcb}{
+        skin=enhanced,
+        lines before break=0,
+        %breakable,
+        after={},
+        %before={},
+        colframe=gray,
+        %colframe=black,
+        colback=gray,
+        coltitle=black,
+        colbacktitle=gray,
+        width=\linewidth,
+        %toprule=0.01cm,
+        bottomrule=0cm,
+        leftrule=0cm,
+        rightrule=0cm,
+        titlerule=0cm,
+        %titlerule=0.01cm,
+        arc=0.1cm,
+        %outer arc=0cm,
+        boxsep=0cm,
+        left=0cm,
+        right=0.1cm,
+        toptitle=0.06cm,
+        bottom=0.06cm,
+        top=0.06cm,
+        %bottomtitle=0.01cm,
+        %lefttitle=\parindent,
+        fonttitle=\footnotesize,
+        #1
+    }%
+}%
+
+\newcounter{Model}
+\newtcolorbox{modeltcb}{}
+
+\changeModelStyle{}
+
+
+\makeatletter
+\renewcommand{\theModel}{\arabic{Model}}
+\newenvironment{model}[2]
+{
+    \ignorespaces
+    \refstepcounter{Model}
+    \protected@edef\@currentlabelname{#1}
+    \label{model.#1}
+    \ifthenelse{\equal{#2}{}}
+    % then
+        { \changeModelStyle{title={\centering \underline{Model #1}}} }
+    % else
+        { \changeModelStyle{title={\centering \underline{Model #1 (#2)}}} }
+    \begin{modeltcb}
+}
+{
+    \end{modeltcb}
+    \ignorespacesafterend
+}
+\makeatother
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Other
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%
+%% ???
+% operators
+%\DeclareMathOperator{\DET}{det}
+%%%%
+
+% gray box
+\newcommand{\gbox}[1]{
+  \begin{center}
+    \fcolorbox{black}{gray}{
+      \begin{minipage}[b]{0.98\textwidth}
+        \begin{center}
+          %\vspace{2mm}
+          \begin{minipage}{0.97\textwidth}
+            #1
+          \end{minipage}
+          \vspace{2mm}
+        \end{center}
+      \end{minipage}
+    }
+  \end{center}
+}
+
+\newcommand{\wbox}[1]{
+  \begin{center}
+    \fcolorbox{black}{white}{
+      \begin{minipage}[b]{0.98\textwidth}
+        \begin{center}
+          %\vspace{2mm}
+          \begin{minipage}{0.97\textwidth}
+            #1
+          \end{minipage}
+          \vspace{2mm}
+        \end{center}
+      \end{minipage}
+    }
+  \end{center}
+}
+

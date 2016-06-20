@@ -1,0 +1,223 @@
+%----------------------------------------------------------------------
+% Document class
+%----------------------------------------------------------------------
+\documentclass[a4paper,twoside,openany,final,11pt]{book}
+
+%What to include (useful if you want to send certain portions for review).
+%\includeonly{
+%  title,
+%  abstract,
+%  acknowledgements,
+%  contents,
+%  ch1,
+%  ch2,
+%  0_backmatter
+%}
+%----------------------------------------------------------------------
+
+
+%----------------------------------------------------------------------
+% Packages and macros
+%----------------------------------------------------------------------
+\usepackage[a4paper]{meta-donnees}
+
+%\usepackage[top=2.5cm, bottom=2.5cm, left=2.5cm, right=2cm]{geometry}
+\usepackage[top=2.5cm, bottom=3cm, inner=3cm, outer=2.5cm]{geometry}
+
+
+\usepackage{longtable}
+\usepackage{listings}
+\usepackage{textcomp}
+\usepackage{url}
+%\usepackage{afterpage} % conflicts with tcolorbox
+\usepackage{placeins}
+
+\usepackage{amsthm}
+\usepackage{pifont}
+\usepackage{rotating}
+\usepackage{latexsym}
+\usepackage{verbatim}
+\usepackage[utf8]{inputenc}
+\usepackage{multirow}
+\usepackage{lscape}
+%\usepackage{makeidx}
+\usepackage{enumitem}
+\usepackage{forest}
+
+\usepackage{bibentry}
+\nobibliography*
+
+%\makeindex
+
+
+% This should be after most packages
+\usepackage[%ps2pdf, %debug,
+            %pdftitle            = {{e.g. The Title}},
+            %pdfsubject          = {e.g. Ph.D. Thesis},
+            %pdfauthor           = {e.g. My Name},
+            %pdfkeywords         = {{e.g. My Keywords}},
+            %pdfpagemode         = {UseOutlines},
+            colorlinks          = true,
+            linkcolor           = {blue},
+            citecolor           = {blue},
+            %urlcolor            = {black},
+            pdfstartview        = {FitH},
+            pdfdisplaydoctitle  = true,
+            bookmarks           = true,
+            bookmarksopen       = false,
+            bookmarksnumbered   = true,
+            bookmarkstype       = {toc},
+            raiselinks          = false,
+            breaklinks          = true,
+            pageanchor          = true,
+            backref             = page]{hyperref}
+
+% These need to be after hyperref
+%\usepackage{algorithm}
+%\usepackage{algorithmic}
+%\usepackage[all]{hypcap}
+%\usepackage[ruled,noline,noend]{algorithm2e}
+
+
+\usepackage{mymath}
+\usepackage{mynotation}
+\usepackage{subcaption}
+\usepackage[format=hang,font=small,labelfont=bf]{caption}
+
+\usepackage[bordercolor=white,color=green!40]{todonotes}
+
+\usepackage[noabbrev,sort]{cleveref} % nameinlink,
+
+\usepackage[hyperref=true,list-style=longtable]{acro}
+
+% This needs to be after backref, which is included by hyperref if backref is
+% enabled.  The command is used to list locations of citations.
+\renewcommand*{\backref}[1]{}
+\renewcommand*{\backrefalt}[4]{
+\ifcase #1
+(Not cited.)
+\or
+(Cited on page #2.)
+\else
+(Cited on pages #2.)
+\fi
+}
+
+
+%----------------------------------------------------------------------
+
+
+%----------------------------------------------------------------------
+% Macros
+%----------------------------------------------------------------------
+
+% todo
+\newcommand{\td}[1]{\todo[inline,noline]{TODO: #1}}
+
+% name of a variable, software ...
+\newcommand{\sn}[1]{{\ttfamily #1}}
+
+% term
+\newcommand{\tn}[1]{\emph{#1}}
+%----------------------------------------------------------------------
+
+
+\setcounter{secnumdepth}{3}
+
+% crossreferences -- cases when capital letter should be used
+\crefname{table}{Table}{Tables}%
+\crefname{subtable}{Table}{Tables}%
+\crefname{part}{Part}{Parts}%
+\crefname{chapter}{Chapter}{Chapters}%
+\crefname{section}{Section}{Sections}%
+\crefname{subsection}{Subsection}{Subsections}%
+\crefname{subsubsection}{Subsection}{Subsections}%
+\crefname{appendix}{Appendix}{Appendices}%
+\crefname{subappendix}{Appendix}{Appendices}%
+\crefname{subsubappendix}{Appendix}{Appendices}%
+\crefname{subsubsubappendix}{Appendix}{Appendices}%
+\crefname{theorem}{Theorem}{Theorems}%
+\crefname{lemma}{Lemma}{Lemmas}%
+\crefname{algorithm}{Algorithm}{Algorithms}%
+\crefname{listing}{Listing}{Listings}%
+\crefname{figure}{Figure}{Figures}%
+\crefname{Hierarchy}{Hierarchy}{Hierarchies}%
+\crefname{HierarchyLevel}{}{}%
+\crefname{Assumption}{Assumption}{Assumptions}%
+\crefname{equation}{}{}%
+\crefname{subequation}{}{}%
+\crefname{parentequation}{}{}%
+\crefformat{equation}{(#2#1#3)}
+\crefformat{subequation}{(#2#1#3)}
+\crefformat{parentequation}{(#2#1#3)}
+%----------------------------------------------------------------------
+
+\graphicspath{{.}{Figures/}{Styles/}}
+
+%\setlist[itemize]{noitemsep, topsep=5pt}
+%\setlist[enumerate]{noitemsep, topsep=5pt}
+%\setlist[description]{noitemsep, topsep=5pt}
+\setlist[itemize]{itemsep=0pt, topsep=5pt}
+\setlist[enumerate]{itemsep=0pt, topsep=5pt}
+\setlist[description]{itemsep=0pt, topsep=5pt, labelwidth=1cm, labelindent=8pt, leftmargin=\labelindent+\labelwidth+\labelsep}
+
+% remove extra white space around long tables
+\setlength{\LTpre}{4pt}
+\setlength{\LTpost}{0pt}
+
+\newcommand{\thesisHierarchyStyle}[1]{\changeHierarchyStyle{width=13cm,breakable,before=\par\smallskip\centering,after=\par}{#1}}
+\thesisHierarchyStyle{}
+
+%--
+\DeclareAcronym{CPU}{   short = CPU,    long = Central Processing Unit}
+\DeclareAcronym{CAS}{   short = CAS,    long = Computer Algebra System}
+\DeclareAcronym{CoM}{   short = CoM,    long = Center of Mass}
+\DeclareAcronym{CoP}{   short = CoP,    long = Center of Pressure}
+\DeclareAcronym{FSM}{   short = FSM,    long = Finite State Machine}
+\DeclareAcronym{KKT}{   short = KKT,    long = Karush-Kuhn-Tucker}
+\DeclareAcronym{LIPM}{  short = LIPM,   long = Linear Inverted Pendulum Model}
+\DeclareAcronym{MPC}{   short = MPC,    long = Model Predictive Control}
+\DeclareAcronym{MMPC}{  short = MMPC,   long = Mixed Model Predictive Control}
+\DeclareAcronym{QP}{    short = QP,     long = Quadratic Program}
+\DeclareAcronym{WMG}{   short = WMG,    long = Walking Motion Generation}
+\DeclareAcronym{ZMP}{   short = ZMP,    long = Zero Moment Point}
+\DeclareAcronym{PD}{    short = PD,     long = Proportional-Derivative}
+\DeclareAcronym{PLLS}{  short = PLLS,   long = Prioritized Linear Least-Squares}
+\DeclareAcronym{SCARA}{ short = SCARA,  long = Selective Compliance Assembly Robot Arm}
+%--
+
+
+%---------------------------------------
+\begin{document}
+
+\sloppy
+%---------------------------------------
+\include{front}
+%---------------------------------------
+\mainmatter
+%---------------------------------------
+\include{ch1-intro}
+\include{ch2-balance}
+\include{ch3-models}
+\include{ch4-mpc}
+\include{ch5-optimization}
+\include{ch6-simulations}
+\include{ch7-conclusion}
+
+%---------------------------------------
+% Appendix
+%---------------------------------------
+\appendix
+\include{app1-dynamics}
+\include{app2-collision}
+\include{app3-jointconstraints}
+\include{app4-surfacecontacts}
+\include{app5-condensing}
+\include{app6-swingfoot}
+\include{app7-regularization}
+%---------------------------------------
+%\backmatter
+%---------------------------------------
+\include{backmatter}
+%---------------------------------------
+\end{document}

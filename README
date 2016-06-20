@@ -1,0 +1,24 @@
+This repository contains TeX sources of my PhD thesis, which was defended at
+ComUE Université Grenoble Alpes in 2016. The TeX style files were taken from
+several other thesis templates, which, unfortunately, I cannot find anymore.
+You are free to use the TeX files in this repository to make a template for
+your own thesis, however, if you want to reuse figures, please, contact me
+first (send me an email to  asherikov at yandex.com).
+
+
+Features:
+
+    1.  All temporary files are kept in 'tmp' folder.
+
+    2.  You can visualize differences from a previous version of the thesis in
+    the git repository using latexdiff: 'make latexdiff REVISION=<oldrevision>'
+    I modified latexdiff script to add support for 'LXDINPUTS' evironment
+    variable, which specifies additional paths to search for included '*.tex'
+    files. The original version of latexdiff requires complete paths.
+
+    3.  You can delete unreferenced bibliography entries and comments from
+    thesis.bib file using 'make bibfilter'. For this purpose I use *.awk
+    scripts from bibextract.
+
+    4.  Note that everything except the title page is in English. Some of the
+    styles were originally in French.

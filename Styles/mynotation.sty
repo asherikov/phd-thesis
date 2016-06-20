@@ -1,0 +1,120 @@
+\ProvidesPackage{mynotation}[]
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%\newcommand{\INERTIA}[1][]{\M[#1]{\mathcal{I}}}
+\newcommand{\INERTIA}[1][]{\M[][#1]{\mathcal{I}}}
+\newcommand{\SINERTIA}[1][]{\barM[][#1]{\mathcal{I}}}
+\newcommand{\TRAN}{\uparrow}
+\newcommand{\ROT}{\circlearrowleft}
+\newcommand{\DES}{{\scriptscriptstyle\heartsuit}}
+%\newcommand{\DES}{\!\MT{des}}
+
+\newcommand{\EULER}{\mathcal{E}}
+\newcommand{\Teuler}{\M{T}_{\EULER}}
+
+\newcommand{\AM}{\mathcal{L}}
+\newcommand{\LM}{\mathcal{P}}
+
+
+\newcommand{\Jlm}{\M{J}_{\V{\LM}}}
+
+% Center of pressure
+\newcommand{\cop}[1][{}]{{\V[#1]{z}}}
+\newcommand{\copC}{z}
+
+\newcommand{\cp}[1][{}]{{\V[#1]{\xi}}}
+\newcommand{\cpC}{\xi}
+
+% CoM Jacobian
+\newcommand{\Jcom}[1][{}]{\M{J}_{\MT{com}#1}}
+\newcommand{\dJcom}[1][{}]{\dotM{J}_{\MT{com}#1}}
+
+
+% generalized coordinates
+\newcommand{\q}{\V{q}}
+\newcommand{\dq}{\dotV{q}}
+\newcommand{\ddq}{\ddotV{q}}
+
+\newcommand{\qn}[1][{}]{\V{q}\vphantom{q}^{\prime#1}}
+\newcommand{\dqn}[1][{}]{\dotV{q}\vphantom{q}^{\prime#1}}
+\newcommand{\ddqn}[1][{}]{\ddotV{q}\vphantom{q}^{\prime#1}}
+
+\newcommand{\qni}[1][{}]{\C{q}\vphantom{q}^{\prime#1}_i}
+\newcommand{\dqni}[1][{}]{\dotC{q}\vphantom{q}^{\prime#1}_i}
+\newcommand{\ddqni}[1][{}]{\ddotC{q}\vphantom{q}^{\prime#1}_i}
+
+
+% torques
+%\newcommand{\torques}{\V{u}}
+\newcommand{\torques}{\V{\tau}}
+
+% contacts
+\newcommand{\Jcontact}{\M{J}_{\TRAN,p}}
+\newcommand{\dJcontact}{\dotM{J}_{\TRAN,p}}
+\newcommand{\Jcontacti}{\M{J}_{\TRAN,i}}
+\newcommand{\dJcontacti}{\dotM{J}_{\TRAN,i}}
+\newcommand{\JcontactWi}{\M{J}_{\ROT,i}}
+\newcommand{\dJcontactWi}{\dotM{J}_{\ROT,i}}
+
+\newcommand{\allcontactf}{\V{f}_{p}}
+
+\newcommand{\impulse}{\V{\rho}}
+\newcommand{\impulseC}{\rho}
+
+\newcommand{\wrench}{\hatV{f}}
+
+\newcommand{\contact}{\V{p}}
+\newcommand{\dcontact}{\dotV{p}}
+\newcommand{\ddcontact}{\ddotV{p}}
+
+\newcommand{\contactW}{\V{\omega}}
+\newcommand{\dcontactW}{\dotV{\omega}}
+
+\newcommand{\contactC}{p}
+\newcommand{\dcontactC}{\dot{p}}
+\newcommand{\ddcontactC}{\ddot{p}}
+
+\newcommand{\force}{\V{f}}
+\newcommand{\forceC}{f}
+
+%\newcommand{\moment}[1][{}]{\V[#1]{\tau}}
+%\newcommand{\momentC}[1][{}]{\C[#1]{\tau}}
+\newcommand{\moment}[1][{}]{\V[#1]{\mu}}
+\newcommand{\momentC}[1][{}]{\C[#1]{\mu}}
+
+% other
+% generators
+\newcommand{\genvector}{\V{v}}
+\newcommand{\genvectorC}{v}
+
+
+\newcommand{\forceext}[1][{}]{\V{f}_{\MT{#1 ext}}}
+\newcommand{\forceextC}[1][{}]{f_{\MT{#1 ext}}}
+\newcommand{\momentext}[1][{}]{\moment_{\MT{#1 ext}}}
+\newcommand{\momentextC}[1][{}]{\momentC_{\MT{#1 ext}}}
+
+
+% selection matrices
+\newcommand{\Itorques}{\V{I}_{\torques}}
+\newcommand{\Ix}{\V{I}_{\MT{x}}}
+\newcommand{\Iy}{\V{I}_{\MT{y}}}
+\newcommand{\Iz}{\V{I}_{\MT{z}}}
+\newcommand{\Ixy}{\V{I}_{\MT{xy}}}
+\newcommand{\Ixz}{\V{I}_{\MT{xz}}}
+\newcommand{\Izy}{\V{I}_{\MT{zy}}}
+
+\newcommand{\x}{\V{\chi}}
+\newcommand{\xC}{\chi}
+\newcommand{\objA}{\M{\mathcal{A}}}
+\newcommand{\objb}{b}
+
+\newcommand{\friction}{\kappa}
+\newcommand{\violation}{\V{v}}
+\newcommand{\violationC}{v}
+
+
+\newcommand{\K}{\mathcal{K}}

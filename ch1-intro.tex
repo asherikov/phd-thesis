@@ -1,0 +1,336 @@
+%-------------------------------------------------------------------------------
+\chapter{Introduction}
+\label{ch.intro}
+\acresetall
+%-------------------------------------------------------------------------------
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Context and motivation}
+
+Humanoid robotics is undoubtedly one of the most fascinating areas in robotics
+research. The reason for this is that the creation of robots, which are
+comparable to humans at least in their motion capabilities, is expected to have
+a tremendous social and industrial impact \cite{Kemp2008handbook}. At the
+present moment, we are, however, quite far from this ultimate goal, even though
+some remarkable progress has been made in the recent years \cite{DRCsite}.
+While we hope that, eventually, humanoid robots will perform dangerous and
+tedious tasks in our place, some valuable gains from studying these robots can
+be obtained in short term. First of all, humanoid robots are very versatile and
+a challenging research and educational platform, since they have to perform a
+large variety of activities, such as sensing, manipulation, locomotion,
+interaction with the environment, and others. Furthermore, these robots can be
+employed in entertainment or play a role as an interactive interface for humans
+\cite{Kemp2008handbook}. Control algorithms developed for humanoid robots may
+find applications in prosthetic devices and exoskeletons, or in the generation
+of natural and functional motions of animated characters
+\cite{VanDePanne1997cgf}.
+
+
+In the present thesis, we limit our focus to the motion control of humanoid
+robots. This is a difficult problem due to the intrinsic complexity of the
+dynamical systems representing the said robots: their nonlinearity,
+underactuation, discrete behavior due to collisions and friction, high number
+of degrees of freedom. Even the modeling and simulation of these systems is a
+challenging problem on its own. Moreover, humanoid robots are supposed to
+operate in non-deterministic environments, which require advanced real time
+control. This real time control must often be realized using relatively weak
+on-board computers, since a network connection to a more powerful computer is
+not available or unreliable. Hence, there is a need for the development of
+controllers, which adequately trade off computational complexity with quality
+and generality of realizable motions. This is usually achieved by imposing
+various limitations on the motions and employing approximate models of the
+robots. Approximate models lack expressiveness of whole body models, but their
+utilization results in smaller demands of computational resources.
+
+
+The complexity of the kinematic structure of humanoid robots makes them
+redundant with respect to typical motion objectives, \EG, the robot can perform
+different tasks with its hands simultaneously. Consequently, it is common to
+employ prioritization of these objectives in the controllers in order to
+exploit this redundancy \cite{Kanoun2009thesis, Saab2013tro, Sentis2007thesis}.
+Sometimes, however, prioritization is not well justified and is not meaningful.
+
+
+The first goal of the present work is to demonstrate that the advantages of
+whole body and an approximate model can be leveraged by mixing them within a
+single predictive control problem. The second goal is to design controllers, in
+which prioritization of objectives is useful and necessary to achieve new
+behaviors.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Contribution}
+
+\begin{itemize}
+    \item One of the primary contributions of the present work is the
+        introduction of a novel approach to the design of whole body motion
+        controllers for humanoid robots. The key idea of the proposed approach
+        is to employ the whole body model and an approximate model of the robot
+        simultaneously within a single controller \cite{Sherikov2014humanoids,
+        Sherikov2015humanoids}. The role of the whole body model is to allow
+        instantaneous whole body motion control, while the approximate model is
+        used for anticipation to ensure long term balance. Such a mix of models
+        enables interplay between them, in particular, instantaneous whole body
+        tasks can influence motions anticipated with an approximate model.
+
+        The resulting controller can be perceived as a whole body \ac{MPC}
+        problem, where the whole body model is replaced by an approximate model
+        everywhere except the current time instant. Hence, in comparison with
+        the whole body \ac{MPC}, our controllers sacrifice quality of the
+        prediction for computational performance.
+
+
+    \item The second contribution consists in several practical applications of
+        strict prioritization of the objectives in the proposed whole body
+        motion controllers and general \ac{MPC}:
+        %
+        \begin{itemize}
+            \item We propose to employ prioritization of state constraints in
+                an \ac{MPC} to implement a time optimal controller for an
+                industrial manipulator \cite{alHomsi2016icra}.
+
+            \item We introduce prioritization in contact force distribution in
+                order to avoid the application of an optional hand contact
+                force unless it is necessary for the execution of a whole body
+                task or the preservation of balance
+                \cite{Sherikov2015humanoids}.
+        \end{itemize}
+        %
+
+
+    \item Finally, there is a number of technical contributions:
+        %
+        \begin{itemize}
+            \item We implement coupling between the whole body model and two
+                approximate models within a single controller and consider
+                possible difficulties in this coupling
+                \cite{Sherikov2014humanoids, Sherikov2015humanoids}.
+
+            \item We discuss the construction of capturability constraints,
+                which ensure that the robot can be stop without a fall, for
+                several approximate models.
+
+            \item Our whole body motion controllers with prioritized objectives
+                serve as a testbed for a general purpose solver of \acf{PLLS}
+                problems described in \cite{Dimitrov2015preprint}.
+
+            \item We formulate the whole body motion controllers so that they
+                are solved by the said solver in the most computationally
+                efficient way.
+
+            \item We evaluate the proposed controllers in simulations and
+                develop the necessary software for performing these
+                simulations.
+
+            \item We contribute to the development of \ac{MPC} schemes for
+                carrying objects in collaboration with humans
+                \cite{Agravante2016icra} and for walking with varying \ac{CoM}
+                height \cite{Brasseur2015humanoids}.
+        \end{itemize}
+        %
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection{List of publications}
+
+The work on this thesis resulted in the following publications in peer-reviewed
+conferences
+%
+\begin{itemize}
+    \item \bibentry{Sherikov2014humanoids}
+    \item \bibentry{Sherikov2015humanoids}
+    \item \bibentry{Brasseur2015humanoids}
+    \item \bibentry{Agravante2016icra}
+    \item \bibentry{alHomsi2016icra}
+\end{itemize}
+%
+
+The author also contributed to two journal papers, which are currently under
+review
+%
+\begin{itemize}
+    \item \bibentry{Dimitrov2015preprint}
+    \item \bibentry{Agravante2016preprint}
+\end{itemize}
+%
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Outline}
+% \crefrange{ch.balance}{ch.simulations}
+This dissertation is composed of $5$ main Chapters
+\ref{ch.balance}--\ref{ch.simulations}, a conclusive \cref{ch.conclusion} and
+appendices. We start with discussion of our general point of view on balance
+preservation of humanoid robots in \cref{ch.balance}. We declare anticipation
+and capturability, \IE, the ability to stop, to be the basic concepts, which we
+employ for the construction of balance preserving controllers. The next, rather
+technical, \cref{ch.modeling} is devoted to the presentation of whole body and
+approximate models employed in this work. In \cref{ch.mpc}, we move on to
+anticipation using approximate models. We also consider capturability enforcing
+constraints for various approximate models, and introduce the idea of mixing
+whole body and approximate models. \cref{ch.optimization} is focused on the
+\acf{PLLS} optimization framework, which is used to define our controllers. We
+outline the idea of prioritization of objectives and give several examples of
+its applications. Finally, we discuss techniques, which allow for efficient
+solution of \ac{PLLS} problems. In \cref{ch.simulations}, we consider two whole
+body motion controllers presented in \cite{Sherikov2014humanoids,
+Sherikov2015humanoids} in detail and discuss their performance in simulations.
+In addition to that, we overview results of several works performed in
+collaboration.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\section{Notation}\label{sec.notation}
+
+\begin{description}
+    \item[Software names] \hfill \\
+        Names of programs and software libraries, names of constants, variables
+        and functions that are used in programs are typed in a monospaced font:
+        \sn{Eigen}, \sn{LexLS}.
+
+    \item[General scalars, vectors, matrices] \hfill
+        \begin{itemize}[leftmargin=0cm]
+            \item Vectors and matrices are denoted by letters in a bold font:
+                $\V{v}$, $\M{M}$, $\M{\mathcal{A}}$.
+
+            \item Scalars are denoted using the standard italic of calligraphic
+                font: $N, n, \mathcal{K}$.
+
+            \item $\T{(\cdot)}$ -- transpose of a matrix or a vector.
+
+            \item $\CROSS[(\cdot)]$ -- a skew-symmetric matrix used for
+                representation of a cross product of two three dimensional
+                vectors as a product of a matrix and a vector:
+                %
+                \begin{equation}
+                    \V{v}
+                    =
+                    \begin{bmatrix}
+                        v^x\\
+                        v^y\\
+                        v^z
+                    \end{bmatrix},
+                    \quad
+                    \CROSS[\V{v}]
+                    =
+                    \begin{bmatrix}
+                        0      &   -v^z   &   v^y\\
+                        v^z    &   0      &   -v^x\\
+                        -v^y   &   v^x    &   0 \\
+                    \end{bmatrix}.
+                \end{equation}
+
+            \item Block diagonal matrices:
+                %
+                \begin{equation}
+                    \begin{gathered}
+                        \diag{2}{\M{M}} =
+                        \begin{bmatrix}
+                            \M{M}   &   \M{0}\\
+                            \M{0}   &   \M{M}\\
+                        \end{bmatrix}
+                        ,
+                        \quad
+                        \diag{k = 1 \dots 2}{\M{M}_k} =
+                        \begin{bmatrix}
+                            \M{M}_1 &   \M{0}  \\
+                            \M{0}   &   \M{M}_2\\
+                        \end{bmatrix}
+                        ,
+                        \\
+                        \diag{}{\M{M}, \M{R}} =
+                        \begin{bmatrix}
+                            \M{M} &   \M{0}  \\
+                            \M{0}   &   \M{R}\\
+                        \end{bmatrix}
+                        .
+                    \end{gathered}
+               \end{equation}
+
+            \item Stacked vectors and matrices:
+                %
+                \begin{equation}
+                    \V{v} = (\V{v}_1, \dots, \V{v}_n) = \begin{bmatrix} \V{v}_1 \\ \vdots \\ \V{v}_n \\ \end{bmatrix},
+                    \quad
+                    \M{M} = (\M{M}_1, \dots, \M{M}_n) = \begin{bmatrix} \M{M}_1 \\ \vdots \\ \M{M}_n \\ \end{bmatrix}.
+                \end{equation}
+
+            \item Inequalities between vectors $\V{v} \ge \V{r}$ are interpreted
+                component-wise.
+        \end{itemize}
+
+
+    \item[Special matrices and vectors] \hfill
+        \begin{itemize}[leftmargin=0cm]
+            \item $\M{I}$ -- an identity matrix. $\M{I}_n$ -- $n \CROSS n$ identity matrix.
+
+            \item $\M{I}_{(\cdot)}$ -- a selection matrix, examples:
+                \begin{itemize}
+                    \item $\Itorques$ -- a torque selection matrix;
+
+                    \item $\M{I}_{\alpha}$, where $\alpha$ is a combination of
+                        $\{x,y,z\}$, selects components of a 3d vector:
+                        %
+                        \begin{equation}
+                            \Ix = \begin{bmatrix} 1 & 0 & 0 \end{bmatrix}, \quad
+                            \Ixz = \begin{bmatrix} 1 & 0 & 0 \\ 0 & 0 &  1 \end{bmatrix}, \quad
+                            \Izy = \begin{bmatrix} 0 & 0 & 1 \\ 0 & 1 &  0 \end{bmatrix}.
+                        \end{equation}
+                \end{itemize}
+
+            \item $\M{0}$ -- a matrix of zeros. $\M{0}_{n,m}$ -- $n \CROSS m$ matrix of zeros.
+
+            \item $\M{J} = (\M{J}_{\TRAN}, \M{J}_{\ROT})$ -- a Jacobian matrix
+                with translational $\M{J}_{\TRAN}$ and rotational
+                $\M{J}_{\ROT}$ parts.
+        \end{itemize}
+
+
+    \item[Reference frames] \hfill
+        \begin{itemize}[leftmargin=0cm]
+            \item Frames are denoted using a sans-serif font: $\FRAME{A}$. All
+                considered frames are orthonormal.
+
+            \item $\V[A]{v}$ -- vector expressed in frame $\FRAME{A}$.
+
+            \item $\M[B][A]{R}$ -- rotation matrix from from frame $\FRAME{B}$
+                to frame $\FRAME{A}$.
+
+            \item The global frame is implicit and is not denoted by any
+                letter, \EG, $\M[B][]{R}$ rotates from frame $\FRAME{B}$ to the
+                global frame.
+        \end{itemize}
+
+
+    \item[Sets] \hfill
+        \begin{itemize}[leftmargin=0cm]
+            \item The sets are denoted using a blackboard bold font: $\SET{A}$.
+
+            \item $\RR$ is the set of real numbers.
+
+            \item $\RR_{\ge 0}, \RR_{> 0}$ are the sets of non-negative and positive real numbers.
+
+            \item $\RR^n$ is the set of real-valued vectors.
+
+            \item $\RR^{n \CROSS m}$ is the set of real-valued matrices.
+        \end{itemize}
+
+
+    \item[Other] \hfill
+        \begin{itemize}[leftmargin=0cm]
+            \item Function names in mathematical expressions are written in the
+                regular font: $\FUNC{func}(\V{x}, \V{y})$.
+
+            \item $\NORME{\cdot}$ denotes the Euclidean norm.
+        \end{itemize}
+\end{description}
